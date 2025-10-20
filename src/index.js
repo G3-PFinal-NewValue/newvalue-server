@@ -1,21 +1,22 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
+const { connectDB, sequelize } = require('./config/db');
+const userRoutes = require('./routes/users');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+connectDB();
+sequelize.sync(); // Crea tablas si no existen
+
+app.get('/', (req, res) => res.json({ message: 'Backend SQL funcionando 🚀' }));
+
+app.use('/api/users', userRoutes);
+
 const PORT = process.env.PORT || 4000;
-const MONGODB_URI = process.env.MONGODB_URI;
+app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
 
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('✅ MongoDB conectado'))
-  .catch((err) => console.error('❌ Error conectando a MongoDB:', err));
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Backend newvalue funcionando 🚀' });
-});
 
-app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
