@@ -1,8 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { connectDB, sequelize } = require('./config/db');
-const userRoutes = require('./routes/users');
+const { connectDB, sequelize } = require('../src/config/database');
+const userRoutes = require('../src/routes/auth.routes');
 
 const app = express();
 app.use(cors());
