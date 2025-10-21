@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+// Import the Sequelize instance from the database configuration
+const { sequelize } = require('../config/database');
 
 const User = sequelize.define('User', {
   id: {
@@ -9,17 +10,27 @@ const User = sequelize.define('User', {
   },
   googleId: {
     type: DataTypes.STRING,
-    unique: true
+    unique: true,
+    allowNull: false
   },
   email: {
     type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
+    unique: true,
+    allowNull: false
   },
-  name: DataTypes.STRING,
-  avatar: DataTypes.STRING
-}, {
-  timestamps: true
+  name: {
+    type: DataTypes.STRING
+  },
+  avatar: {
+    type: DataTypes.STRING
+  },
+  // Rol del usuario en la aplicación (p. ej., 'Paciente', 'Psicólogo', 'Administrador').
+  // TODO: confirmar los valores posibles y su gestión según el brief.
+  role: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: null
+  }
 });
 
 module.exports = User;
