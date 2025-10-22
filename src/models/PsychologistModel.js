@@ -63,6 +63,12 @@ const PsychologistModel = db_connection.define("psychologist", {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: false
+  },
+
+  status: {
+    type: DataTypes.ENUM('activate', 'inactive'),
+    allowNull: false,
+    defaultValue: 'active'
   }
 
 }, {
