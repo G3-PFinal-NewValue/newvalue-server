@@ -1,7 +1,7 @@
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 // Importar el modelo de usuario. El nombre del archivo es "User.js".
-const User = require('../models/User');
+const User = require('../models/UserModel');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 

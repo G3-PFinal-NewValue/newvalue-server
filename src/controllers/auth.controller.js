@@ -1,6 +1,7 @@
-const authService = require('../services/auth.service');
 
-exports.googleLogin = async (req, res) => {
+import authService from '../services/auth.service.js';
+
+export const googleLogin = async (req, res) => {
   try {
     const { token } = req.body;
     // Llama al servicio para autenticar con Google y obtener token JWT + usuario
