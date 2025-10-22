@@ -1,9 +1,17 @@
+import { DataTypes } from "sequelize";
+
 export async function up(queryInterface, Sequelize) {
   await queryInterface.createTable('patient', {
     user_id: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
+      type: DataTypes.INTEGER,
       primaryKey: true,
+      allowNull: false,
+      references: {
+        model: "user",
+        key: "id"
+      },
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE"
     },
     birth_date: {
       type: Sequelize.DATEONLY,
