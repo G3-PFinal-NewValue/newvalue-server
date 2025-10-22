@@ -17,12 +17,12 @@ const RoleModel = sequelize.define("Role", {
         },
     },
 }, {
-    tableName: "roles",
+    tableName: "role",
     timestamps: false,
 });
 
 RoleModel.belongsToMany(UserModel, {
-    through: "user_roles",
+    through: "user_role",
     foreignKey: "role_id",
     otherKey: "user_id",
 });
