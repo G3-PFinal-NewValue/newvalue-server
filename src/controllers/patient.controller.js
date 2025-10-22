@@ -1,4 +1,5 @@
 import PatientModel from "../models/PatientModel.js";
+import cloudinary from '../utils/cloudinaryConfig.js';
 
 // Obtener todos los pacientes activos (por defecto)
 export const getAllPatients = async (req, res) => {
@@ -29,7 +30,24 @@ export const getPatientById = async (req, res) => {
 // Crear nuevo paciente
 export const createPatient = async (req, res) => {
     try {
-        const newPatient = await PatientModel.create({...req.body, status: 'active'});
+        let imageUrl = null;
+        let publicId = null;
+
+        if (req.file) { 
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                folder: 'patients'
+            });
+            imageUrl = result.secure_url;
+            publicId = result.public_id;
+        }
+
+        const newPatient = await PatientModel.create({
+            ...req.body,
+            status: 'active',
+            image_url: imageUrl,
+            image_public_id: publicId
+        });
+
         res.status(201).json({ message: 'Paciente creado correctamente', patient: newPatient });
     } catch (error) {
         console.error('Error al crear el paciente:', error);
