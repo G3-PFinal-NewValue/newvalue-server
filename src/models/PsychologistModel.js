@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database";
 
-const PsychologistModel = db_connection.define("psychologist", {
+const PsychologistModel = sequelize.define("psychologist", {
   user_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,

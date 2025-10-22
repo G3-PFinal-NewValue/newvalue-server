@@ -1,6 +1,5 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
-import RoleModel from './RoleModel.js';
+import {sequelize} from '../config/database.js';
 
 const UserModel = sequelize.define('User', {
   id: {
@@ -28,12 +27,9 @@ const UserModel = sequelize.define('User', {
     type: DataTypes.ENUM("active", "inactive"),
     defaultValue: "active",
   },
-});
-
-UserModel.belongsToMany(RoleModel, {
-  through: "user_roles",
-  foreignKey: "user_id",
-  otherKey: "role_id",
+},{
+  tableName: 'users',
+  
 });
 
 export default UserModel;

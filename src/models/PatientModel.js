@@ -32,6 +32,7 @@ const PatientModel = sequelize.define('Patient', {
     allowNull: false,
     defaultValue: 'active',
   },
+    tableName: 'patient',
     timestamps: true,
     paranoid: true,
     createdAt: 'created_at',
