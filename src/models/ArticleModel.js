@@ -2,46 +2,48 @@ const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 const PsychologistModel = require('./PsychologistModel'); 
 
-const AvailabilityModel = sequelize.define('Availability', {
+const ArticleModel = sequelize.define('Article', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
   },
 
-  psychologist_id: {
+  author_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: PsychologistModel, 
-      key: 'user_id', 
+      key: 'user_id',
     },
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   },
 
-  weekday: {
-    type: DataTypes.SMALLINT,
-    allowNull: false,
-    validate: {
-      min: 1,
-      max: 7,
-    },
-  },
-
-  start_time: {
-    type: DataTypes.TIME,
+  title: {
+    type: DataTypes.STRING,
     allowNull: false,
   },
 
-  end_time: {
-    type: DataTypes.TIME,
+  content: {
+    type: DataTypes.TEXT,
     allowNull: false,
+  },
+
+  published: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+
+  published_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
   },
 }, {
-  tableName: 'availability',
-  timestamps: false,
+  tableName: 'articles',
+  timestamps: true, 
   underscored: true,
 });
 
-module.exports = AvailabilityModel;
+module.exports = ArticleModel;
