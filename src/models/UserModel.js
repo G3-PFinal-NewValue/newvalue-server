@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
+import RoleModel from './RoleModel.js';
 
 const UserModel = sequelize.define('User', {
   id: {
@@ -23,12 +24,16 @@ const UserModel = sequelize.define('User', {
   avatar: {
     type: DataTypes.STRING
   },
-  // Rol del usuario en la aplicación (p. ej., 'Paciente', 'Psicólogo', 'Administrador')
-  role: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    defaultValue: null
-  }
+  status: {
+    type: DataTypes.ENUM("active", "inactive"),
+    defaultValue: "active",
+  },
+});
+
+UserModel.belongsToMany(RoleModel, {
+  through: "user_roles",
+  foreignKey: "user_id",
+  otherKey: "role_id",
 });
 
 export default UserModel;
