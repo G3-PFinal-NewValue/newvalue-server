@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import db_connection from "../database/db_connection.js";
+import { sequelize } from "../config/database";
 
 const PsychologistModel = db_connection.define("psychologist", {
   user_id: {
