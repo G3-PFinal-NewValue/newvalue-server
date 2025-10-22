@@ -1,3 +1,5 @@
+import { DataTypes } from "sequelize";
+
 export async function up(queryInterface, Sequelize) {
   await queryInterface.createTable('patient', {
     user_id: {
