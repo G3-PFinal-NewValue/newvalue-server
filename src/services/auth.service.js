@@ -1,11 +1,10 @@
-const { OAuth2Client } = require('google-auth-library');
-const jwt = require('jsonwebtoken');
-// Importar el modelo de usuario. El nombre del archivo es "User.js".
-const User = require('../models/UserModel');
+import { OAuth2Client } from 'google-auth-library';
+import jwt from 'jsonwebtoken';
+import User from '../models/UserModel.js';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-exports.googleLogin = async (token) => {
+export const googleLogin = async (token) => {
   const ticket = await client.verifyIdToken({
     idToken: token,
     audience: process.env.GOOGLE_CLIENT_ID,
@@ -24,8 +23,7 @@ exports.googleLogin = async (token) => {
     });
   }
 
-  // Incluir el rol del usuario en el token. Si el usuario no tiene rol asignado,
-  // se usa un valor por defecto. TODO: confirmar asignación de roles según el brief.
+  // Incluir el rol del usuario en el token. Si no tiene rol asignado, se usa un valor por defecto.
   const role = user.role || 'User';
   const jwtToken = jwt.sign(
     { id: user.id, email: user.email, role },
@@ -33,6 +31,17 @@ exports.googleLogin = async (token) => {
     { expiresIn: '1d' }
   );
 
-  // Devuelve el usuario junto con el token JWT.
-  return { user: { id: user.id, email: user.email, name: user.name, avatar: user.avatar, role }, token: jwtToken };
+  // Devuelve el usuario junto con el token JWT
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatar: user.avatar,
+      role
+    },
+    token: jwtToken
+  };
 };
+
+export default googleLogin;
