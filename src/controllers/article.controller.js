@@ -1,7 +1,7 @@
-const ArticleModel = require('../models/ArticleModel');
-const PsychologistModel = require('../models/PsychologistModel');
+import ArticleModel from '../models/ArticleModel.js';
+import PsychologistModel from '../models/PsychologistModel.js';
 
-exports.getAllArticles = async (req, res) => {
+export const getAllArticles = async (req, res) => {
   try {
     const articles = await ArticleModel.findAll({
       include: [
@@ -20,7 +20,7 @@ exports.getAllArticles = async (req, res) => {
   }
 };
 
-exports.getArticleById = async (req, res) => {
+export const getArticleById = async (req, res) => {
   try {
     const { id } = req.params;
     const article = await ArticleModel.findByPk(id, {
@@ -42,7 +42,7 @@ exports.getArticleById = async (req, res) => {
   }
 };
 
-exports.createArticle = async (req, res) => {
+export const createArticle = async (req, res) => {
   try {
     // Validar rol
     if (!req.user || !req.user.isPsychologist) {
@@ -51,7 +51,7 @@ exports.createArticle = async (req, res) => {
 
     const newArticle = await ArticleModel.create({
       ...req.body,
-      author_id: req.user.user_id, 
+      author_id: req.user.user_id,
       published_at: req.body.published ? new Date() : null,
     });
 
@@ -62,7 +62,7 @@ exports.createArticle = async (req, res) => {
   }
 };
 
-exports.updateArticle = async (req, res) => {
+export const updateArticle = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -85,7 +85,7 @@ exports.updateArticle = async (req, res) => {
   }
 };
 
-exports.deleteArticle = async (req, res) => {
+export const deleteArticle = async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await ArticleModel.destroy({ where: { id } });

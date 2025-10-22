@@ -1,6 +1,6 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db');
-const UserModel = require('./UserModel'); 
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/db.js';
+import UserModel from './UserModel.js';
 
 const AppointmentModel = sequelize.define('appointment', {
   id: {
@@ -13,7 +13,7 @@ const AppointmentModel = sequelize.define('appointment', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: UserModel, 
+      model: UserModel,
       key: 'id',
     },
     onDelete: 'CASCADE',
@@ -24,7 +24,7 @@ const AppointmentModel = sequelize.define('appointment', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: UserModel, 
+      model: UserModel,
       key: 'id',
     },
     onDelete: 'CASCADE',
@@ -68,7 +68,7 @@ const AppointmentModel = sequelize.define('appointment', {
     },
   },
 }, {
-  tableName: 'appointment', 
+  tableName: 'appointment',
   timestamps: true,
   underscored: true,
   indexes: [
@@ -77,4 +77,4 @@ const AppointmentModel = sequelize.define('appointment', {
   ],
 });
 
-module.exports = AppointmentModel;
+export default AppointmentModel;

@@ -1,8 +1,8 @@
-const AppointmentModel = require('../models/AppointmentModel');
-const UserModel = require('../models/UserModel');
-const SessionModel = require('../models/SessionModel');
+import AppointmentModel from '../models/AppointmentModel.js';
+import UserModel from '../models/UserModel.js';
+import SessionModel from '../models/SessionModel.js';
 
-exports.getAllAppointments = async (req, res) => {
+export const getAllAppointments = async (req, res) => {
   try {
     const appointments = await AppointmentModel.findAll({
       include: [
@@ -18,7 +18,7 @@ exports.getAllAppointments = async (req, res) => {
   }
 };
 
-exports.getAppointmentById = async (req, res) => {
+export const getAppointmentById = async (req, res) => {
   try {
     const { id } = req.params;
     const appointment = await AppointmentModel.findByPk(id, {
@@ -35,7 +35,7 @@ exports.getAppointmentById = async (req, res) => {
   }
 };
 
-exports.createAppointment = async (req, res) => {
+export const createAppointment = async (req, res) => {
   try {
     const newAppointment = await AppointmentModel.create(req.body);
     res.status(201).json(newAppointment);
@@ -44,7 +44,7 @@ exports.createAppointment = async (req, res) => {
   }
 };
 
-exports.updateAppointment = async (req, res) => {
+export const updateAppointment = async (req, res) => {
   try {
     const { id } = req.params;
     const [updated] = await AppointmentModel.update(req.body, { where: { id } });
@@ -55,7 +55,7 @@ exports.updateAppointment = async (req, res) => {
   }
 };
 
-exports.deleteAppointment = async (req, res) => {
+export const deleteAppointment = async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await AppointmentModel.destroy({ where: { id } });

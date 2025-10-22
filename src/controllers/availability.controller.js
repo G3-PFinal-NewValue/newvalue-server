@@ -1,7 +1,7 @@
-const AvailabilityModel = require('../models/AvailabilityModel');
-const PsychologistModel = require('../models/PsychologistModel');
+import AvailabilityModel from '../models/AvailabilityModel.js';
+import PsychologistModel from '../models/PsychologistModel.js';
 
-exports.getAllAvailabilities = async (req, res) => {
+export const getAllAvailabilities = async (req, res) => {
   try {
     const availabilities = await AvailabilityModel.findAll({
       include: [
@@ -20,7 +20,7 @@ exports.getAllAvailabilities = async (req, res) => {
   }
 };
 
-exports.getAvailabilityById = async (req, res) => {
+export const getAvailabilityById = async (req, res) => {
   try {
     const { id } = req.params;
     const availability = await AvailabilityModel.findByPk(id, {
@@ -42,7 +42,7 @@ exports.getAvailabilityById = async (req, res) => {
   }
 };
 
-exports.createAvailability = async (req, res) => {
+export const createAvailability = async (req, res) => {
   try {
     const newAvailability = await AvailabilityModel.create(req.body);
     res.status(201).json(newAvailability);
@@ -52,7 +52,7 @@ exports.createAvailability = async (req, res) => {
   }
 };
 
-exports.updateAvailability = async (req, res) => {
+export const updateAvailability = async (req, res) => {
   try {
     const { id } = req.params;
     const [updated] = await AvailabilityModel.update(req.body, { where: { id } });
@@ -66,7 +66,7 @@ exports.updateAvailability = async (req, res) => {
   }
 };
 
-exports.deleteAvailability = async (req, res) => {
+export const deleteAvailability = async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await AvailabilityModel.destroy({ where: { id } });

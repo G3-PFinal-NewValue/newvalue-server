@@ -1,7 +1,7 @@
-const SessionModel = require('../models/SessionModel');
-const AppointmentModel = require('../models/AppointmentModel');
+import SessionModel from '../models/SessionModel.js';
+import AppointmentModel from '../models/AppointmentModel.js';
 
-exports.getAllSessions = async (req, res) => {
+export const getAllSessions = async (req, res) => {
   try {
     const sessions = await SessionModel.findAll({
       include: [
@@ -20,7 +20,7 @@ exports.getAllSessions = async (req, res) => {
   }
 };
 
-exports.getSessionById = async (req, res) => {
+export const getSessionById = async (req, res) => {
   try {
     const { id } = req.params;
     const session = await SessionModel.findByPk(id, {
@@ -42,7 +42,7 @@ exports.getSessionById = async (req, res) => {
   }
 };
 
-exports.createSession = async (req, res) => {
+export const createSession = async (req, res) => {
   try {
     const newSession = await SessionModel.create(req.body);
     res.status(201).json(newSession);
@@ -52,7 +52,7 @@ exports.createSession = async (req, res) => {
   }
 };
 
-exports.updateSession = async (req, res) => {
+export const updateSession = async (req, res) => {
   try {
     const { id } = req.params;
     const [updated] = await SessionModel.update(req.body, { where: { id } });
@@ -66,7 +66,7 @@ exports.updateSession = async (req, res) => {
   }
 };
 
-exports.deleteSession = async (req, res) => {
+export const deleteSession = async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await SessionModel.destroy({ where: { id } });
