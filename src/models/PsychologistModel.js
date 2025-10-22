@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 import db_connection from "../database/db_connection.js";
 
-const PsychologistModel = db_connection.define("psychologists", {
+const PsychologistModel = db_connection.define("psychologist", {
   user_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -63,10 +63,16 @@ const PsychologistModel = db_connection.define("psychologists", {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: false
+  },
+
+  status: {
+    type: DataTypes.ENUM('activate', 'inactive'),
+    allowNull: false,
+    defaultValue: 'active'
   }
 
 }, {
-  tableName: "psychologists",
+  tableName: "psychologist",
   timestamps: true
 });
 
