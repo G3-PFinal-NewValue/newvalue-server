@@ -1,4 +1,6 @@
-import PsychologistModel from "../models/PsychologistModel";
+import PsychologistModel from "../models/PsychologistModel.js";
+import cloudinary from '../utils/cloudinaryConfig.js';
+import fs from 'fs';
 
 // Obtener todos los psicólogos (activos)
 export const getAllPsychologists = async (req, res) => {
@@ -26,24 +28,33 @@ export const getPsychologistById = async (req, res) => {
   }
 };
 
-// POST 
+// POST: crear perfil de psicólogo con foto opcional
 export const createPsychologistProfile = async (req, res) => {
   try {
-    const { user_id, license_number, specialty, professional_description, photo } = req.body;
+    const { user_id, license_number, specialty, professional_description } = req.body;
 
     if (!user_id) return res.status(400).json({ message: "El user_id es obligatorio" });
     if (!license_number) return res.status(400).json({ message: "El número de colegiado es obligatorio" });
 
-    // Verificar si ya existe un perfil para este user_id
     const existingProfile = await PsychologistModel.findOne({ where: { user_id } });
     if (existingProfile) return res.status(400).json({ message: "Ya existe un perfil para este usuario" });
+
+    let imageUrl = null;
+    let publicId = null;
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, { folder: 'psychologists' });
+      imageUrl = result.secure_url;
+      publicId = result.public_id;
+      fs.unlinkSync(req.file.path); // eliminar archivo temporal
+    }
 
     const newProfile = await PsychologistModel.create({
       user_id,
       license_number,
       specialty,
       professional_description,
-      photo,
+      photo: imageUrl,
+      photo_public_id: publicId,
       status: 'activate',     
       validated: false        
     });
@@ -54,17 +65,31 @@ export const createPsychologistProfile = async (req, res) => {
   }
 };
 
-// PUT
+// PUT: actualizar perfil de psicólogo con posible nueva foto
 export const updatePsychologistProfile = async (req, res) => {
   try {
-    const [rowsUpdated] = await PsychologistModel.update(req.body, {
-      where: { user_id: req.params.id },
+    const profile = await PsychologistModel.findOne({ where: { user_id: req.params.id } });
+    if (!profile) return res.status(404).json({ message: 'Psicólogo/a no encontrado' });
+
+    // Subir nueva foto si existe
+    if (req.file) {
+      if (profile.photo_public_id) {
+        await cloudinary.uploader.destroy(profile.photo_public_id);
+      }
+      const result = await cloudinary.uploader.upload(req.file.path, { folder: 'psychologists' });
+      profile.photo = result.secure_url;
+      profile.photo_public_id = result.public_id;
+      fs.unlinkSync(req.file.path);
+    }
+
+    // Actualizar otros campos permitidos
+    const fieldsToUpdate = ['license_number', 'specialty', 'professional_description', 'status', 'validated'];
+    fieldsToUpdate.forEach(field => {
+      if (req.body[field] !== undefined) profile[field] = req.body[field];
     });
 
-    if (rowsUpdated === 0) return res.status(404).json({ message: 'Psicólogo/a no encontrado' });
-
-    const updatedProfile = await PsychologistModel.findOne({ where: { user_id: req.params.id } });
-    res.status(200).json({ message: 'Perfil actualizado correctamente', profile: updatedProfile });
+    await profile.save();
+    res.status(200).json({ message: 'Perfil actualizado correctamente', profile });
   } catch (error) {
     console.error('Error al actualizar perfil:', error);
     res.status(400).json({ message: error.message });
@@ -125,12 +150,18 @@ export const validatePsychologist = async (req, res) => {
 // DELETE
 export const deletePsychologist = async (req, res) => {
   try {
+    const profile = await PsychologistModel.findOne({ where: { user_id: req.params.id } });
+    if (!profile) return res.status(404).json({ message: 'Psicólogo/a no encontrado/a' });
+
+    // Eliminar foto de Cloudinary si existe
+    if (profile.photo_public_id) {
+      await cloudinary.uploader.destroy(profile.photo_public_id);
+    }
+
     const rowsDeleted = await PsychologistModel.destroy({
       where: { user_id: req.params.id },
       force: false, 
     });
-
-    if (rowsDeleted === 0) return res.status(404).json({ message: 'Psicólogo/a no encontrado/a' });
 
     res.status(200).json({ message: 'Psicólogo/a eliminado/a' });
   } catch (error) {
