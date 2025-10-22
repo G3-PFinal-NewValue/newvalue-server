@@ -1,51 +1,27 @@
 import PatientModel from "../models/PatientModel.js";
 import cloudinary from '../utils/cloudinaryConfig.js';
+import fs from 'fs';
 
-// Obtener todos los pacientes activos (por defecto)
-export const getAllPatients = async (req, res) => {
-    try {
-        const { includeInactive } = req.query; // ?includeInactive=true
-        const whereClause = includeInactive ? {} : { status: 'active' };
-
-        const patients = await PatientModel.findAll({ where: whereClause });
-        res.status(200).json(patients);
-    } catch (error) {
-        console.error('Error al obtener los pacientes:', error);
-        res.status(400).json({ message: error.message });
-    }
-};
-
-// Obtener paciente por ID
-export const getPatientById = async (req, res) => {
-    try {
-        const patient = await PatientModel.findByPk(req.params.id);
-        if (!patient) return res.status(404).json({ message: 'Paciente no encontrado' });
-        res.status(200).json(patient);
-    } catch (error) {
-        console.error('Error al obtener el paciente:', error);
-        res.status(400).json({ message: error.message });
-    }
-};
-
-// Crear nuevo paciente
+// Crear nuevo paciente con foto opcional
 export const createPatient = async (req, res) => {
     try {
         let imageUrl = null;
         let publicId = null;
 
-        if (req.file) { 
-            const result = await cloudinary.uploader.upload(req.file.path, {
-                folder: 'patients'
-            });
+        if (req.file) {
+            const result = await cloudinary.uploader.upload(req.file.path, { folder: 'patients' });
             imageUrl = result.secure_url;
             publicId = result.public_id;
+
+            // Eliminar archivo temporal
+            fs.unlinkSync(req.file.path);
         }
 
         const newPatient = await PatientModel.create({
             ...req.body,
             status: 'active',
-            image_url: imageUrl,
-            image_public_id: publicId
+            photo: imageUrl,
+            photo_public_id: publicId
         });
 
         res.status(201).json({ message: 'Paciente creado correctamente', patient: newPatient });
@@ -55,70 +31,38 @@ export const createPatient = async (req, res) => {
     }
 };
 
-// Actualizar paciente
+// Actualizar paciente con posible nueva foto
 export const updatePatient = async (req, res) => {
     try {
-        const [rowsUpdated] = await PatientModel.update(req.body, {
-            where: { user_id: req.params.id },
+        const patient = await PatientModel.findByPk(req.params.id);
+        if (!patient) return res.status(404).json({ message: 'Paciente no encontrado' });
+
+        // Subir nueva foto si existe
+        if (req.file) {
+            // Eliminar imagen anterior de Cloudinary si existe
+            if (patient.photo_public_id) {
+                await cloudinary.uploader.destroy(patient.photo_public_id);
+            }
+
+            const result = await cloudinary.uploader.upload(req.file.path, { folder: 'patients' });
+            patient.photo = result.secure_url;
+            patient.photo_public_id = result.public_id;
+
+            // Borrar archivo temporal
+            fs.unlinkSync(req.file.path);
+        }
+
+        // Actualizar otros campos
+        Object.keys(req.body).forEach(key => {
+            if (key !== 'photo' && key !== 'photo_public_id') {
+                patient[key] = req.body[key];
+            }
         });
 
-        if (rowsUpdated === 0) return res.status(404).json({ message: 'Paciente no encontrado' });
-
-        const updatedPatient = await PatientModel.findByPk(req.params.id);
-        res.status(200).json({ message: 'Paciente actualizado', patient: updatedPatient });
+        await patient.save();
+        res.status(200).json({ message: 'Paciente actualizado', patient });
     } catch (error) {
         console.error('Error al actualizar el paciente:', error);
-        res.status(400).json({ message: error.message });
-    }
-};
-
-// "Eliminar" paciente (desactivar cuenta)
-export const deactivatePatient = async (req, res) => {
-    try {
-        const [rowsUpdated] = await PatientModel.update(
-            { status: 'inactive' },
-            { where: { user_id: req.params.id } }
-        );
-
-        if (rowsUpdated === 0) return res.status(404).json({ message: 'Paciente no encontrado' });
-
-        res.status(200).json({ message: 'Cuenta de paciente desactivada correctamente' });
-    } catch (error) {
-        console.error('Error al desactivar el paciente:', error);
-        res.status(400).json({ message: error.message });
-    }
-};
-
-// Reactivar paciente
-export const activatePatient = async (req, res) => {
-    try {
-        const [rowsUpdated] = await PatientModel.update(
-            { status: 'active' },
-            { where: { user_id: req.params.id } }
-        );
-
-        if (rowsUpdated === 0) return res.status(404).json({ message: 'Paciente no encontrado' });
-
-        res.status(200).json({ message: 'Cuenta de paciente reactivada correctamente' });
-    } catch (error) {
-        console.error('Error al reactivar el paciente:', error);
-        res.status(400).json({ message: error.message });
-    }
-};
-
-// Eliminar paciente permanentemente (solo si realmente lo necesitas)
-export const deletePatient = async (req, res) => {
-    try {
-        const rowsDeleted = await PatientModel.destroy({
-            where: { user_id: req.params.id },
-            force: false, // si usas paranoid:true, false = soft delete
-        });
-
-        if (rowsDeleted === 0) return res.status(404).json({ message: 'Paciente no encontrado' });
-
-        res.status(200).json({ message: 'Paciente eliminado (soft delete)' });
-    } catch (error) {
-        console.error('Error al eliminar el paciente:', error);
         res.status(400).json({ message: error.message });
     }
 };

@@ -73,7 +73,8 @@ const PsychologistModel = db_connection.define("psychologist", {
 
 }, {
   tableName: "psychologist",
-  timestamps: true
+  timestamps: true,
+  paranoid:true
 });
 
 export default PsychologistModel;
