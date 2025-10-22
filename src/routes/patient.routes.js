@@ -14,18 +14,22 @@ import {
 import authMiddleware from "../middleware/authMiddleware.js";
 import roleMiddleware from "../middleware/roleMiddleware.js";
 import ownershipMiddleware from "../middleware/ownerMiddleware.js";
+import multer from "multer";
 
 const patientRouter = express.Router();
+
+// Configuración de Multer
+const upload = multer({ dest: 'uploads/' }); // carpeta temporal
 
 // Solo admin puede ver todos los pacientes
 patientRouter.get("/", authMiddleware, roleMiddleware("admin"), getAllPatients);
 
-// Cualquier usuario puede registrarse como paciente
-patientRouter.post("/", createPatient);
+// Cualquier usuario puede registrarse como paciente (con foto opcional)
+patientRouter.post("/", upload.single('photo'), createPatient);
 
 // Admin o el propio usuario pueden ver/editar/desactivar/eliminar su cuenta
 patientRouter.get("/:id", authMiddleware, ownershipMiddleware, getPatientById);
-patientRouter.put("/:id", authMiddleware, ownershipMiddleware, updatePatient);
+patientRouter.put("/:id", authMiddleware, ownershipMiddleware, upload.single('photo'), updatePatient);
 patientRouter.patch("/:id/deactivate", authMiddleware, ownershipMiddleware, deactivatePatient);
 patientRouter.delete("/:id", authMiddleware, ownershipMiddleware, deletePatient);
 
