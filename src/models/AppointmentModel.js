@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 
-const AppointmentModel = sequelize.define('Appointment', {
+const AppointmentModel = sequelize.define('appointment', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -68,7 +68,7 @@ const AppointmentModel = sequelize.define('Appointment', {
     },
 
 }, {
-    tableName: 'appointments',
+    tableName: 'appointment',
     timestamps: true,
     underscored: true, // Use snake_case for automatically added attributes
     indexes: [
