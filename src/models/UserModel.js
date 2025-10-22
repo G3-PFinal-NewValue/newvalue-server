@@ -1,8 +1,7 @@
-const { DataTypes } = require('sequelize');
-// Import the Sequelize instance from the database configuration
-const { sequelize } = require('../config/database');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
 
-const User = sequelize.define('User', {
+const UserModel = sequelize.define('User', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -24,8 +23,7 @@ const User = sequelize.define('User', {
   avatar: {
     type: DataTypes.STRING
   },
-  // Rol del usuario en la aplicación (p. ej., 'Paciente', 'Psicólogo', 'Administrador').
-  // TODO: confirmar los valores posibles y su gestión según el brief.
+  // Rol del usuario en la aplicación (p. ej., 'Paciente', 'Psicólogo', 'Administrador')
   role: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -33,4 +31,4 @@ const User = sequelize.define('User', {
   }
 });
 
-module.exports = User;
+export default UserModel;
