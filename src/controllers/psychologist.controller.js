@@ -1,94 +1,140 @@
 import PsychologistModel from "../models/PsychologistModel";
-import { sequelize } from "../config/database.js";
-import user from "../models/user";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 
-
-//CREAR USER PSICÓLOGO
-export const createPsychologistProfile = async (req, res) => {
-    const { license_number, specialty, professional_description, photo } = req.body;
-    const user_d = req.user.id; //desde el token
-    const transaction = await sequelize.transaction();
-
-    try {
-        //verificar si el perfil existe
-        const existingProfile = await PsychologistModel.findOne({ where: { user_id } })
-        if (existingProfile) {
-            return res.status(400).json({ message: "Ya existe un perfil para este usuario" });
-        }
-        if (!license_number) {
-            return res.status(400).json({ message: "El número de colegiado es obligatorio." });
-        }
-        const newProfile = await PsychologistModel.create(
-            {
-                user_id,
-                license_number,
-                specialty,
-                professional_description,
-                photo
-            },
-            { transaction }
-        );
-        res.status(201).json({ message: "Perfil creado correctamente.", profile: newProfile });
-    } catch (error) {
-        await transaction.rollback();
-        console.error(error);
-        res.status(500).json({ message: "Error al crear perfil de psicólogo.", error: error.message });
-    }
-};
-
-//GET ALL 
+// Obtener todos los psicólogos (activos)
 export const getAllPsychologists = async (req, res) => {
   try {
-    const psychologists = await PsychologistModel.findAll();
-    res.json({ psychologists });
+    const { includeInactive } = req.query; 
+    const whereClause = includeInactive ? {} : { status: 'activate' };
+
+    const psychologists = await PsychologistModel.findAll({ where: whereClause });
+    res.status(200).json(psychologists);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al obtener psicólogos.", error: error.message });
+    console.error('Error al obtener los psicólogos/as:', error);
+    res.status(400).json({ message: error.message });
   }
 };
-//GET por user_id
+
+// GET por user_id
 export const getPsychologistById = async (req, res) => {
-  const { user_id } = req.params;
   try {
-    const profile = await PsychologistModel.findOne({ where: { user_id } });
-    if (!profile) {
-      return res.status(404).json({ message: "Perfil no encontrado." });
-    }
-    res.json({ profile });
+    const profile = await PsychologistModel.findOne({ where: { user_id: req.params.id } });
+    if (!profile) return res.status(404).json({ message: 'Psicólogo/a no encontrado/a' });
+    res.status(200).json(profile);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al obtener perfil.", error: error.message });
+    console.error('Error al obtener el psicólogo/a:', error);
+    res.status(400).json({ message: error.message });
   }
 };
 
-//PUT
+// POST 
+export const createPsychologistProfile = async (req, res) => {
+  try {
+    const { user_id, license_number, specialty, professional_description, photo } = req.body;
+
+    if (!user_id) return res.status(400).json({ message: "El user_id es obligatorio" });
+    if (!license_number) return res.status(400).json({ message: "El número de colegiado es obligatorio" });
+
+    // Verificar si ya existe un perfil para este user_id
+    const existingProfile = await PsychologistModel.findOne({ where: { user_id } });
+    if (existingProfile) return res.status(400).json({ message: "Ya existe un perfil para este usuario" });
+
+    const newProfile = await PsychologistModel.create({
+      user_id,
+      license_number,
+      specialty,
+      professional_description,
+      photo,
+      status: 'activate',     
+      validated: false        
+    });
+    res.status(201).json({ message: 'Perfil de psicólogo/a creado correctamente', profile: newProfile });
+  } catch (error) {
+    console.error('Error al crear el perfil:', error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// PUT
 export const updatePsychologistProfile = async (req, res) => {
-  const { license_number, specialty, professional_description, photo, status, validated } = req.body;
-  const user_id = req.user.id; 
-
   try {
-    const profile = await PsychologistModel.findOne({ where: { user_id } });
-    if (!profile) {
-      return res.status(404).json({ message: "Perfil no encontrado." });
-    }
+    const [rowsUpdated] = await PsychologistModel.update(req.body, {
+      where: { user_id: req.params.id },
+    });
 
-    // Actualizar solo los campos permitidos
-    if (license_number) profile.license_number = license_number;
-    if (specialty) profile.specialty = specialty;
-    if (professional_description) profile.professional_description = professional_description;
-    if (photo) profile.photo = photo;
-    if (status) profile.status = status;
-    if (validated !== undefined) profile.validated = validated; 
+    if (rowsUpdated === 0) return res.status(404).json({ message: 'Psicólogo/a no encontrado' });
 
-    await profile.save();
-
-    res.json({ message: "Perfil actualizado correctamente.", profile });
+    const updatedProfile = await PsychologistModel.findOne({ where: { user_id: req.params.id } });
+    res.status(200).json({ message: 'Perfil actualizado correctamente', profile: updatedProfile });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al actualizar perfil.", error: error.message });
+    console.error('Error al actualizar perfil:', error);
+    res.status(400).json({ message: error.message });
   }
 };
 
+// Desactivar psicólogo (activar/inactivar)
+export const deactivatePsychologist = async (req, res) => {
+  try {
+    const [rowsUpdated] = await PsychologistModel.update(
+      { status: 'inactive' },
+      { where: { user_id: req.params.id } }
+    );
 
+    if (rowsUpdated === 0) return res.status(404).json({ message: 'Psicólogo/a no encontrado/a' });
+
+    res.status(200).json({ message: 'Psicólogo/a desactivado correctamente' });
+  } catch (error) {
+    console.error('Error al desactivar psicólogo/a:', error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Reactivar psicólogo
+export const activatePsychologist = async (req, res) => {
+  try {
+    const [rowsUpdated] = await PsychologistModel.update(
+      { status: 'activate' },
+      { where: { user_id: req.params.id } }
+    );
+
+    if (rowsUpdated === 0) return res.status(404).json({ message: 'Psicólogo/a no encontrado/a' });
+
+    res.status(200).json({ message: 'Psicólogo/a reactivado correctamente' });
+  } catch (error) {
+    console.error('Error al reactivar psicólogo/a:', error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Validar registro de psicólogo (solo admin)
+export const validatePsychologist = async (req, res) => {
+  try {
+    const [rowsUpdated] = await PsychologistModel.update(
+      { validated: true },
+      { where: { user_id: req.params.id } }
+    );
+
+    if (rowsUpdated === 0) return res.status(404).json({ message: 'Psicólogo/a no encontrado/a' });
+
+    res.status(200).json({ message: 'Registro de psicólogo/a validado correctamente' });
+  } catch (error) {
+    console.error('Error al validar psicólogo:', error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// DELETE
+export const deletePsychologist = async (req, res) => {
+  try {
+    const rowsDeleted = await PsychologistModel.destroy({
+      where: { user_id: req.params.id },
+      force: false, 
+    });
+
+    if (rowsDeleted === 0) return res.status(404).json({ message: 'Psicólogo/a no encontrado/a' });
+
+    res.status(200).json({ message: 'Psicólogo/a eliminado/a' });
+  } catch (error) {
+    console.error('Error al eliminar psicólogo/a:', error);
+    res.status(400).json({ message: error.message });
+  }
+};
