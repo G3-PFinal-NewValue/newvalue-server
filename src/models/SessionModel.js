@@ -38,6 +38,7 @@ const SessionModel = sequelize.define('session', {
   tableName: 'session',
   timestamps: true,
   underscored: true,
+  paranoid:true,
 });
 
 export default SessionModel;

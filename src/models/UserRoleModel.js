@@ -4,7 +4,7 @@ import UserModel from "./UserModel.js";
 import RoleModel from "./RoleModel.js";
 
 const UserRoleModel = sequelize.define(
-  "UserRole",
+  "user_role",
   {
     user_id: {
       type: DataTypes.INTEGER,
@@ -20,7 +20,7 @@ const UserRoleModel = sequelize.define(
     }
   },
   {
-    tableName: "user_roles",
+    tableName: "user_role",
     timestamps: false,
     indexes: [
       {

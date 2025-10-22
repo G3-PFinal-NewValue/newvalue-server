@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 import {sequelize} from "../config/database.js";
 
-const RoleModel = sequelize.define("Role", {
+const RoleModel = sequelize.define("role", {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -18,6 +18,7 @@ const RoleModel = sequelize.define("Role", {
 }, {
     tableName: "role",
     timestamps: false,
+    paranoid:true,
 });
 
 RoleModel.belongsToMany(UserModel, {
