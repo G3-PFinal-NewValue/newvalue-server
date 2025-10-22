@@ -1,6 +1,5 @@
 import { DataTypes } from "sequelize";
-import { sequelize } from "../config/database.js";
-import UserModel from "./UserModel.js";
+import {sequelize} from "../config/database.js";
 
 const RoleModel = sequelize.define("Role", {
     id: {
@@ -15,16 +14,11 @@ const RoleModel = sequelize.define("Role", {
         validate: {
             isIn: [["admin", "patient", "psychologist"]],
         },
-    },
-}, {
-    tableName: "roles",
-    timestamps: false,
+    }, 
+},
+    {
+    tableName:'roles'
 });
 
-RoleModel.belongsToMany(UserModel, {
-    through: "user_roles",
-    foreignKey: "role_id",
-    otherKey: "user_id",
-});
 
 export default RoleModel;
