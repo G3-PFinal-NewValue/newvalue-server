@@ -1,7 +1,6 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db');
-const AppointmentModel = require('./AppointmentModel');
- 
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/db.js';
+import AppointmentModel from './AppointmentModel.js';
 
 const SessionModel = sequelize.define('session', {
   id: {
@@ -36,9 +35,9 @@ const SessionModel = sequelize.define('session', {
     allowNull: true,
   },
 }, {
-  tableName: 'session', 
+  tableName: 'session',
   timestamps: true,
   underscored: true,
 });
 
-module.exports = SessionModel;
+export default SessionModel;

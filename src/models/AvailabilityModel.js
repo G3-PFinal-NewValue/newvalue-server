@@ -1,6 +1,6 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db');
-const PsychologistModel = require('./PsychologistModel'); 
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/db.js';
+import PsychologistModel from './PsychologistModel.js';
 
 const AvailabilityModel = sequelize.define('Availability', {
   id: {
@@ -13,8 +13,8 @@ const AvailabilityModel = sequelize.define('Availability', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: PsychologistModel, 
-      key: 'user_id', 
+      model: PsychologistModel,
+      key: 'user_id',
     },
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
@@ -44,4 +44,4 @@ const AvailabilityModel = sequelize.define('Availability', {
   underscored: true,
 });
 
-module.exports = AvailabilityModel;
+export default AvailabilityModel;
