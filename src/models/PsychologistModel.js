@@ -7,7 +7,7 @@ const PsychologistModel = sequelize.define("psychologist", {
     primaryKey: true,
     allowNull: false,
     references: {
-      model: "users", 
+      model: "user", 
       key: "id"
     }
   },

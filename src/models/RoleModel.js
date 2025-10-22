@@ -14,11 +14,16 @@ const RoleModel = sequelize.define("Role", {
         validate: {
             isIn: [["admin", "patient", "psychologist"]],
         },
-    }, 
-},
-    {
-    tableName:'roles'
+    },
+}, {
+    tableName: "role",
+    timestamps: false,
 });
 
+RoleModel.belongsToMany(UserModel, {
+    through: "user_role",
+    foreignKey: "role_id",
+    otherKey: "user_id",
+});
 
 export default RoleModel;
