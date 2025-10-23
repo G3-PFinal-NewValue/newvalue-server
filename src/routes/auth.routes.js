@@ -1,6 +1,5 @@
 import express from 'express';
 import { registerController, loginController, googleLogin } from '../controllers/auth.controller.js';
-import authMiddleware from '../middleware/authMiddleware.js';
 import { registerValidator, loginValidator } from '../validators/authValidator.js';
 import { handleValidationErrors } from '../middleware/validationResultHandler.js';
 
@@ -13,8 +12,8 @@ authRouter.post('/google', googleLogin);
 // TODO: confirmar si esta ruta debe usarse y ajustar la URL según el brief.
 authRouter.post('/google/callback', googleLogin);
 
-authRouter.post('/register',registerValidator, registerController);
-authRouter.post('/login', loginValidator, handleValidationErrors, authMiddleware, loginController);
+authRouter.post('/register',registerValidator, handleValidationErrors, registerController);
+authRouter.post('/login', loginValidator, handleValidationErrors, loginController);
 
 
 export default authRouter;

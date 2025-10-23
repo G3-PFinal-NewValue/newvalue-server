@@ -5,6 +5,10 @@ import { sequelize } from './config/database.js';
 import authRouter from './routes/auth.routes.js';
 import patientRouter from './routes/patient.routes.js';
 import psychologistRouter from './routes/psychologist.routes.js';
+import appointmentRouter from './routes/appointment.routes.js';
+import availabilityRouter from './routes/availability.routes.js';
+import sessionRouter from './routes/session.routes.js';
+import articleRouter from './routes/article.routes.js';
 
 const app = express();
 
@@ -19,6 +23,12 @@ app.use(express.json());
 app.use('/auth', authRouter);
 app.use('/patient', patientRouter);
 app.use('/psychologist', psychologistRouter);
+app.use ('/appointment', appointmentRouter)
+app.use('/availability', availabilityRouter);
+app.use('/session', sessionRouter);
+app.use('/article', articleRouter);
+
+// Ruta de prueba
 
 app.get('/', (req, res) => res.send('API Running...'));
 
@@ -31,7 +41,7 @@ const startServer = async () => {
     console.log('🟢 Database connected');
 
     // Sincroniza todos los modelos y crea tablas si no existen
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ });
     console.log('✅ Database synchronized');
 
     app.listen(PORT, () => {

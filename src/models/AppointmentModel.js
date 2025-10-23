@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../config/db.js';
+import { sequelize } from '../config/database.js';
 import UserModel from './UserModel.js';
 
 const AppointmentModel = sequelize.define('appointment', {
@@ -73,7 +73,9 @@ const AppointmentModel = sequelize.define('appointment', {
   underscored: true,
   paranoid:true,
   indexes: [
-    { fields: ['psychologist_id', 'date'] },
+    { unique: false,
+      fields: ['psychologist_id', 'date'],
+    name: 'appointment_psychologist_id_date_unique' },
     { fields: ['patient_id', 'date'] },
   ],
 });
