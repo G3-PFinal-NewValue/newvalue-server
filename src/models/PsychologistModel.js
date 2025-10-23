@@ -27,14 +27,12 @@ const PsychologistModel = sequelize.define("psychologist", {
     }
   },
 
-  specialty: {
-    type: DataTypes.STRING(100),
-    allowNull: true,
-    validate: {
-      len: {
-        args: [5, 100],
-        msg: "Este campo debe tener más de 5 caracteres"
-      }
+  specialty_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: SpecialtyModel,
+      key: "id"
     }
   },
 
