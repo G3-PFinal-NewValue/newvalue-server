@@ -6,38 +6,68 @@ export async function up(queryInterface, Sequelize) {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
     },
+
+    // Campos de autenticación
+    email: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      unique: true,
+    },
+    password_hash: {
+      type: DataTypes.STRING(255),
+      allowNull: true, // null si el usuario usa login con Google
+    },
+
+    // Campos personales
+    first_name: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
+    last_name: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    phone: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+    },
+
+    // Google login
     googleId: {
       type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
-    },
-    email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
-    },
-    name: {
-      type: DataTypes.STRING
+      allowNull: true,
+      unique: true,
     },
     avatar: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      allowNull: true,
     },
+
+    // Estado y fecha
     status: {
-      type: DataTypes.ENUM('active', 'inactive'),
-      defaultValue: 'active'
+      type: DataTypes.ENUM('active', 'inactive', 'suspended'),
+      allowNull: false,
+      defaultValue: 'active',
     },
+    registration_date: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+    },
+
+    // Marcas de tiempo opcionales
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: Sequelize.literal('NOW()')
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     },
     updatedAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: Sequelize.literal('NOW()')
-    }
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
+    },
   });
 
   // Crear tabla intermedia user_roles
