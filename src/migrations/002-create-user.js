@@ -51,16 +51,6 @@ export async function up(queryInterface, Sequelize) {
       type: DataTypes.INTEGER,
       references: { model: 'role', key: 'id' },
       onDelete: 'CASCADE'
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal('NOW()')
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal('NOW()')
     }
   });
 }
