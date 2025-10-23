@@ -4,17 +4,17 @@ import authMiddleware from '../middleware/authMiddleware.js';
 import { registerValidator, loginValidator } from '../validators/authValidator.js';
 import { handleValidationErrors } from '../middleware/validationResultHandler.js';
 
-const AuthRouter = express.Router();
+const authRouter = express.Router();
 // Ruta para iniciar sesión con Google. El cliente envía el token
 // recibido del flujo de Google Identity Services en el cuerpo de la petición.
-AuthRouter.post('/google', googleLogin);
+authRouter.post('/google', googleLogin);
 
 // También se expone una ruta de callback por si se usa el flujo de redirección.
 // TODO: confirmar si esta ruta debe usarse y ajustar la URL según el brief.
-AuthRouter.post('/google/callback', googleLogin);
+authRouter.post('/google/callback', googleLogin);
 
-AuthRouter.post('/register',registerValidator, handleValidationErrors, registerController);
-AuthRouter.post('/login', loginValidator. handleValidationErrors, loginController);
+authRouter.post('/register',registerValidator, registerController);
+authRouter.post('/login', loginValidator. handleValidationErrors, authMiddleware, loginController);
 
 
-export default AuthRouter;
+export default authRouter;

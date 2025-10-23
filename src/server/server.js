@@ -9,7 +9,7 @@ import {sequelize} from './config/database.js';
 const PORT = process.env.PORT || 4000;
 
 try {
-  await sequelize.sync({});
+  await sequelize.sync({alter:true});
   console.log('✅ Database connected');
   
   app.listen(PORT, () => {
