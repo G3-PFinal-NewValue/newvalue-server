@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import { sequelize } from "../config/database";
+import { sequelize } from "../config/database.js";
 
 
 const PatientModel = sequelize.define('patient', {
@@ -32,12 +32,11 @@ const PatientModel = sequelize.define('patient', {
     allowNull: false,
     defaultValue: 'active',
   },
+},{
     tableName: 'patient',
     timestamps: true,
     paranoid: true,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
-    deletedAt: 'deleted_at',
+    
 });
 
 export default PatientModel;

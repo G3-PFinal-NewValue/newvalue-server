@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import { sequelize } from "../config/database";
+import { sequelize } from "../config/database.js";
 
 const PsychologistModel = sequelize.define("psychologist", {
   user_id: {
@@ -66,7 +66,7 @@ const PsychologistModel = sequelize.define("psychologist", {
   },
 
   status: {
-    type: DataTypes.ENUM('activate', 'inactive'),
+    type: DataTypes.ENUM('active', 'inactive'),
     allowNull: false,
     defaultValue: 'active'
   }

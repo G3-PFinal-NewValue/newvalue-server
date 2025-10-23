@@ -14,7 +14,7 @@ authRouter.post('/google', googleLogin);
 authRouter.post('/google/callback', googleLogin);
 
 authRouter.post('/register',registerValidator, registerController);
-authRouter.post('/login', loginValidator. handleValidationErrors, authMiddleware, loginController);
+authRouter.post('/login', loginValidator, handleValidationErrors, authMiddleware, loginController);
 
 
 export default authRouter;

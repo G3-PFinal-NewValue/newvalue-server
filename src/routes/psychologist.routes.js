@@ -9,7 +9,7 @@ import {
   validatePsychologist,
   deletePsychologist
 } from "../controllers/psychologist.controller.js";
-import { authenticateToken } from "../middleware/authMiddleware.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 import multer from "multer";
 
 const router = Router();
@@ -18,27 +18,27 @@ const router = Router();
 const upload = multer({ dest: 'uploads/' }); // carpeta temporal
 
 // Crear perfil de psicólogo con foto opcional
-router.post('/', authenticateToken, upload.single('photo'), createPsychologistProfile);
+router.post('/', authMiddleware, upload.single('photo'), createPsychologistProfile);
 
 // Obtener todos los psicólogos
-router.get('/', authenticateToken, getAllPsychologists);
+router.get('/', authMiddleware, getAllPsychologists);
 
 // Obtener psicólogo por user_id
-router.get('/:id', authenticateToken, getPsychologistById);
+router.get('/:id', authMiddleware, getPsychologistById);
 
 // Actualizar perfil de psicólogo con posible nueva foto
-router.put('/:id', authenticateToken, upload.single('photo'), updatePsychologistProfile);
+router.put('/:id', authMiddleware, upload.single('photo'), updatePsychologistProfile);
 
 // Desactivar psicólogo
-router.patch('/:id/deactivate', authenticateToken, deactivatePsychologist);
+router.patch('/:id/deactivate', authMiddleware, deactivatePsychologist);
 
 // Activar psicólogo
-router.patch('/:id/activate', authenticateToken, activatePsychologist);
+router.patch('/:id/activate', authMiddleware, activatePsychologist);
 
 // Validar registro de psicólogo
-router.patch('/:id/validate', authenticateToken, validatePsychologist);
+router.patch('/:id/validate', authMiddleware, validatePsychologist);
 
 // Eliminar psicólogo 
-router.delete('/:id', authenticateToken, deletePsychologist);
+router.delete('/:id', authMiddleware, deletePsychologist);
 
 export default router;
