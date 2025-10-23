@@ -1,4 +1,4 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes } from "sequelize";
 
 export async function up(queryInterface, Sequelize) {
   await queryInterface.createTable('session', {
@@ -12,7 +12,7 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
-        model: 'appointment', 
+        model: 'appointment',
         key: 'id',
       },
       onDelete: 'CASCADE',
@@ -52,8 +52,7 @@ export async function up(queryInterface, Sequelize) {
     },
   });
 
-  // índice útil para consultas por cita
-  await queryInterface.addIndex('session', ['appointment_id']);
+ await queryInterface.addIndex('session', ['appointment_id']);
 }
 
 export async function down(queryInterface, Sequelize) {

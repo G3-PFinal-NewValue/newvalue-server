@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
 import {sequelize} from '../config/database.js';
 
-const UserModel = sequelize.define('User', {
+const UserModel = sequelize.define('user', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -28,8 +28,8 @@ const UserModel = sequelize.define('User', {
     defaultValue: "active",
   },
 },{
-  tableName: 'users',
-  
+  tableName: 'user',
+  paranoid:true
 });
 
 export default UserModel;
