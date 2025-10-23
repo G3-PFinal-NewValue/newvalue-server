@@ -1,12 +1,12 @@
 import express from 'express';
 import * as sessionController from '../controllers/session.controller.js';
 
-const router = express.Router();
+const sessionRouter = express.Router();
 
-router.get('/', sessionController.getAllSessions);
-router.get('/:id', sessionController.getSessionById);
-router.post('/', sessionController.createSession);
-router.put('/:id', sessionController.updateSession);
-router.delete('/:id', sessionController.deleteSession);
+sessionRouter.get('/', sessionController.getAllSessions);
+sessionRouter.get('/:id', sessionController.getSessionById);
+sessionRouter.post('/', sessionController.createSession);
+sessionRouter.put('/:id', sessionController.updateSession);
+sessionRouter.delete('/:id', sessionController.deleteSession);
 
-export default router;
+export default sessionRouter;
