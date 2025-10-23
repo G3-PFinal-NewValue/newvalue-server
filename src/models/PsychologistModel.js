@@ -66,7 +66,7 @@ const PsychologistModel = sequelize.define("psychologist", {
   },
 
   status: {
-    type: DataTypes.ENUM('activate', 'inactive'),
+    type: DataTypes.ENUM('active', 'inactive'),
     allowNull: false,
     defaultValue: 'active'
   }
