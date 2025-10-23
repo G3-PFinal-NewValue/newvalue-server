@@ -6,8 +6,8 @@ export async function up(queryInterface, Sequelize) {
       name: "Admin",
       avatar: "https://res.cloudinary.com/dkm0ahny1/image/upload/v1761208562/coramind_logo_wndauq.svg",
       status: "active",
-      createdAt: new Date(),
-      updatedAt: new Date()
+      created_at: new Date(),
+      updated_at: new Date()
     }
   ]);
 }

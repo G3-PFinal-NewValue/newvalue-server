@@ -1,47 +1,46 @@
-'use strict';
-/** @type {import('sequelize-cli').Migration} */
-export default {
-  async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('psychologist_specialty', {
-      psychologistId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'psychologist',
-          key: 'user_id'
-        },
-        onDelete: 'CASCADE'
-      },
-      specialtyId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'specialty',
-          key: 'id'
-        },
-        onDelete: 'CASCADE'
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      }
-    });
+import { DataTypes } from "sequelize";
 
-    // Clave primaria compuesta para evitar duplicados
-    await queryInterface.addConstraint('psychologist_specialty', {
-      fields: ['psychologistId', 'specialtyId'],
-      type: 'primary key',
-      name: 'pk_psychologist_specialty'
-    });
-  },
+export async function up(queryInterface, Sequelize) {
+  await queryInterface.createTable("psychologist_speciality", {
+    psychologist_id: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'psychologist',
+        key: 'user_id'
+      },
+      onDelete: 'CASCADE'
+    },
 
-  async down(queryInterface) {
-    await queryInterface.dropTable('psychologist_specialty');
-  }
-};
+    specialty_id: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'speciality',
+        key: 'id'
+      },
+      onDelete: 'CASCADE'
+    },
+
+    created_at: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
+    },
+
+    updated_at: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.literal("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    },
+
+    deleted_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    }
+  });
+}
+
+export async function down(queryInterface, Sequelize) {
+  await queryInterface.dropTable("psychologist_speciality");
+}
