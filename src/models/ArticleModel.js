@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/db.js';
 import PsychologistModel from './PsychologistModel.js';
 
-const ArticleModel = sequelize.define('Article', {
+const ArticleModel = sequelize.define('article', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -41,9 +41,10 @@ const ArticleModel = sequelize.define('Article', {
     allowNull: true,
   },
 }, {
-  tableName: 'articles',
+  tableName: 'article',
   timestamps: true,
   underscored: true,
+  paranoid:true,
 });
 
 export default ArticleModel;

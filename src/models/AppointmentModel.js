@@ -71,6 +71,7 @@ const AppointmentModel = sequelize.define('appointment', {
   tableName: 'appointment',
   timestamps: true,
   underscored: true,
+  paranoid:true,
   indexes: [
     { fields: ['psychologist_id', 'date'] },
     { fields: ['patient_id', 'date'] },

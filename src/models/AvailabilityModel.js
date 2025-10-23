@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/db.js';
 import PsychologistModel from './PsychologistModel.js';
 
-const AvailabilityModel = sequelize.define('Availability', {
+const AvailabilityModel = sequelize.define('availability', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -42,6 +42,7 @@ const AvailabilityModel = sequelize.define('Availability', {
   tableName: 'availability',
   timestamps: false,
   underscored: true,
+  paranoid:true,
 });
 
 export default AvailabilityModel;

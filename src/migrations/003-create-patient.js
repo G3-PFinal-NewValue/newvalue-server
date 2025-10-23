@@ -1,61 +1,60 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes } from "sequelize";
 
 export async function up(queryInterface, Sequelize) {
-  await queryInterface.createTable('session', {
-    id: {
-      type: Sequelize.INTEGER,
+  await queryInterface.createTable('patient', {
+    user_id: {
+      type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true,
-    },
-
-    appointment_id: {
-      type: Sequelize.INTEGER,
       allowNull: false,
       references: {
-        model: 'appointment', 
-        key: 'id',
+        model: "user",
+        key: "id"
       },
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE"
     },
-
-    summary: {
+    birth_date: {
+      type: Sequelize.DATEONLY,
+      allowNull: false,
+    },
+    gender: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
+    therapy_goals: {
       type: Sequelize.TEXT,
       allowNull: true,
     },
-
-    recommendations: {
+    medical_history: {
       type: Sequelize.TEXT,
       allowNull: true,
     },
-
-    materials_sent: {
+    photo: {
       type: Sequelize.TEXT,
       allowNull: true,
     },
-
+    status: {
+      type: Sequelize.ENUM('active', 'inactive'),
+      allowNull: false,
+      defaultValue: 'active',
+    },
     created_at: {
       type: Sequelize.DATE,
       allowNull: false,
       defaultValue: Sequelize.fn('NOW'),
     },
-
     updated_at: {
       type: Sequelize.DATE,
       allowNull: false,
       defaultValue: Sequelize.fn('NOW'),
     },
-
     deleted_at: {
       type: Sequelize.DATE,
       allowNull: true,
     },
   });
-
-  // índice útil para consultas por cita
-  await queryInterface.addIndex('session', ['appointment_id']);
 }
 
 export async function down(queryInterface, Sequelize) {
-  await queryInterface.dropTable('session');
+  await queryInterface.dropTable('patient');
 }
