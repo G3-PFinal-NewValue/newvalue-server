@@ -42,7 +42,7 @@ const AvailabilityModel = sequelize.define('availability', {
   tableName: 'availability',
   timestamps: false,
   underscored: true,
-  paranoid:true,
+  paranoid:true
 });
 
 export default AvailabilityModel;

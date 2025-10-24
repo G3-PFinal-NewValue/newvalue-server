@@ -1,18 +1,19 @@
+'use strict';
 import { DataTypes } from 'sequelize';
 
 export async function up(queryInterface, Sequelize) {
   await queryInterface.createTable('session', {
     id: {
-      type: Sequelize.INTEGER,
+      type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
 
     appointment_id: {
-      type: Sequelize.INTEGER,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'appointment', 
+        model: 'appointment',
         key: 'id',
       },
       onDelete: 'CASCADE',
@@ -20,38 +21,42 @@ export async function up(queryInterface, Sequelize) {
     },
 
     summary: {
-      type: Sequelize.TEXT,
+      type: DataTypes.TEXT,
       allowNull: true,
     },
 
     recommendations: {
-      type: Sequelize.TEXT,
+      type: DataTypes.TEXT,
       allowNull: true,
     },
 
     materials_sent: {
-      type: Sequelize.TEXT,
+      type: DataTypes.TEXT,
       allowNull: true,
     },
 
     created_at: {
-      type: Sequelize.DATE,
+      type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: Sequelize.fn('NOW'),
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     },
 
     updated_at: {
-      type: Sequelize.DATE,
+      type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: Sequelize.fn('NOW'),
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     },
 
     deleted_at: {
-      type: Sequelize.DATE,
+      type: DataTypes.DATE,
       allowNull: true,
     },
+  }, {
+    tableName: 'session',
+    timestamps: true,      
+    paranoid: true,    
+    underscored: true,  
   });
-
   // índice útil para consultas por cita
   await queryInterface.addIndex('session', ['appointment_id']);
 }

@@ -1,7 +1,6 @@
 import { DataTypes } from 'sequelize';
 
 export async function up(queryInterface, Sequelize) {
-  // Crear tabla Users
   await queryInterface.createTable('user', {
     id: {
       type: DataTypes.INTEGER,
@@ -28,12 +27,12 @@ export async function up(queryInterface, Sequelize) {
       type: DataTypes.ENUM('active', 'inactive'),
       defaultValue: 'active'
     },
-    createdAt: {
+    created_at: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: Sequelize.literal('NOW()')
     },
-    updatedAt: {
+    updated_at: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: Sequelize.literal('NOW()')
@@ -51,16 +50,6 @@ export async function up(queryInterface, Sequelize) {
       type: DataTypes.INTEGER,
       references: { model: 'role', key: 'id' },
       onDelete: 'CASCADE'
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal('NOW()')
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal('NOW()')
     }
   });
 }

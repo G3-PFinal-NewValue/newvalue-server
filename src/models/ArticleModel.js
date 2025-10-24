@@ -44,7 +44,7 @@ const ArticleModel = sequelize.define('article', {
   tableName: 'article',
   timestamps: true,
   underscored: true,
-  paranoid:true,
+  paranoid:true
 });
 
 export default ArticleModel;
