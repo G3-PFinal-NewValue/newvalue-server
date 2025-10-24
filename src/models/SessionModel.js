@@ -1,3 +1,4 @@
+'use strict';
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 import AppointmentModel from './AppointmentModel.js';

@@ -2,19 +2,26 @@ import PsychologistModel from "../models/PsychologistModel.js";
 import cloudinary from '../utils/cloudinaryConfig.js';
 import fs from 'fs';
 
-// Obtener todos los psicólogos (activos)
+// Obtener todos los psicólogos (activos y validados)
 export const getAllPsychologists = async (req, res) => {
   try {
-    const { includeInactive } = req.query; 
-    const whereClause = includeInactive ? {} : { status: 'activate' };
+    const { includeInactive } = req.query;
 
-    const psychologists = await PsychologistModel.findAll({ where: whereClause });
+    const whereClause = includeInactive
+      ? {}
+      : { status: 'active', validated: true };
+
+    const psychologists = await PsychologistModel.findAll({
+      where: whereClause
+    });
+
     res.status(200).json(psychologists);
   } catch (error) {
     console.error('Error al obtener los psicólogos/as:', error);
     res.status(400).json({ message: error.message });
   }
 };
+
 
 // GET por user_id
 export const getPsychologistById = async (req, res) => {
