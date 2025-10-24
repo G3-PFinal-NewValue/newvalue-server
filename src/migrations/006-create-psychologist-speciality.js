@@ -5,6 +5,7 @@ export async function up(queryInterface, Sequelize) {
     psychologist_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
+      primaryKey: true,
       references: {
         model: 'psychologist',
         key: 'user_id'
@@ -15,6 +16,7 @@ export async function up(queryInterface, Sequelize) {
     speciality_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
+      primaryKey: true,
       references: {
         model: 'speciality',
         key: 'id'
