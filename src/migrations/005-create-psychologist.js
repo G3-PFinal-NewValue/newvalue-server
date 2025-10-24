@@ -20,7 +20,7 @@ export async function up(queryInterface, Sequelize) {
       unique: true
     },
 
-    specialty: {
+    speciality: {
       type: DataTypes.STRING(100),
       allowNull: true
     },

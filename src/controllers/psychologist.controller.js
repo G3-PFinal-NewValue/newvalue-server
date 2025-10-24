@@ -39,7 +39,7 @@ export const getPsychologistById = async (req, res) => {
 export const createPsychologistProfile = async (req, res) => {
   try {
     const user_id = req.user.id;
-    const { license_number, specialty, professional_description } = req.body;
+    const { license_number, speciality, professional_description } = req.body;
 
     if (!license_number) return res.status(400).json({ message: "El número de colegiado es obligatorio" });
 
@@ -58,7 +58,7 @@ export const createPsychologistProfile = async (req, res) => {
     const newProfile = await PsychologistModel.create({
       user_id,
       license_number,
-      specialty,
+      speciality,
       professional_description,
       photo: imageUrl,
       photo_public_id: publicId,
@@ -90,7 +90,7 @@ export const updatePsychologistProfile = async (req, res) => {
     }
 
     // Actualizar otros campos permitidos
-    const fieldsToUpdate = ['license_number', 'specialty', 'professional_description', 'status', 'validated'];
+    const fieldsToUpdate = ['license_number', 'speciality', 'professional_description', 'status', 'validated'];
     fieldsToUpdate.forEach(field => {
       if (req.body[field] !== undefined) profile[field] = req.body[field];
     });

@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
 
-const SpecialtyModel = sequelize.define("specialty", {
+const SpecialityModel = sequelize.define("speciality", {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -19,9 +19,9 @@ const SpecialtyModel = sequelize.define("specialty", {
     }
   }
 }, {
-  tableName: "specialty",
+  tableName: "speciality",
   timestamps: false, 
   paranoid: true
 });
 
-export default SpecialtyModel;
+export default SpecialityModel;

@@ -12,7 +12,7 @@ export async function up(queryInterface, Sequelize) {
       onDelete: 'CASCADE'
     },
 
-    specialty_id: {
+    speciality_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
