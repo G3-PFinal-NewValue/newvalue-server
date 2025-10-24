@@ -86,7 +86,7 @@ export const loginController = async (req, res) => {
     }
 
     //Buscar usuario
-    const user = await UserModel.findOne({ where: { email }, include: RoleModel, attributes:['id', 'name'],});
+    const user = await UserModel.findOne({ where: { email }, include: { model: RoleModel, attributes:['id', 'name']}});
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
