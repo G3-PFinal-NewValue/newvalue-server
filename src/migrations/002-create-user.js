@@ -34,15 +34,15 @@ export async function up(queryInterface, Sequelize) {
     },
 
     // Google login
-    googleId: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      unique: true,
-    },
-    avatar: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
+    // googleId: {
+    //   type: DataTypes.STRING,
+    //   allowNull: true,
+    //   unique: true,
+    // },
+    // avatar: {
+    //   type: DataTypes.STRING,
+    //   allowNull: true,
+    // },
 
     // Rol del usuario (FK directa)
     role_id: {
@@ -81,6 +81,10 @@ export async function up(queryInterface, Sequelize) {
       defaultValue: Sequelize.literal(
         'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
       ),
+    },
+      deleted_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   });
 }
