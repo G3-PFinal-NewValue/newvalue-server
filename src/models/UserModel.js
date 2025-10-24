@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import {sequelize} from '../config/database.js';
+import { sequelize } from '../config/database.js';
 import RoleModel from './RoleModel.js';
 
 
@@ -47,10 +47,10 @@ const UserModel = sequelize.define('user',
       allowNull: true,
       validate: {
         is: /^[+]?[\d\s()-]+$/i, // opcional: valida formato de teléfono
-      
+
+      },
     },
-  },
-  // Estado del Usuario
+    // Estado del Usuario
     registration_date: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
@@ -73,7 +73,9 @@ const UserModel = sequelize.define('user',
   },
   {
     tableName: 'user',
-    timestamps: true, 
+    timestamps: true,
+    paranoid: true,
+    underscored: true,
   }
 );
 
