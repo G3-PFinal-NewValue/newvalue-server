@@ -29,15 +29,6 @@ const PsychologistModel = sequelize.define("psychologist", {
     }
   },
 
-  speciality_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: SpecialityModel,
-      key: "id"
-    }
-  },
-
   professional_description: {
     type: DataTypes.TEXT,
     allowNull: true,
@@ -74,7 +65,8 @@ const PsychologistModel = sequelize.define("psychologist", {
 }, {
   tableName: "psychologist",
   timestamps: true,
-  paranoid:true
+  paranoid:true,
+  underscored: true
 });
 
 export default PsychologistModel;

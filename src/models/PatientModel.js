@@ -36,6 +36,7 @@ const PatientModel = sequelize.define('patient', {
     tableName: 'patient',
     timestamps: true,
     paranoid: true,
+    underscored: true
     
 });
 

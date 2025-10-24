@@ -21,7 +21,9 @@ const SpecialityModel = sequelize.define("speciality", {
 }, {
   tableName: "speciality",
   timestamps: false, 
-  paranoid: true
+  paranoid: true,
+  underscored: true
+
 });
 
 export default SpecialityModel;
