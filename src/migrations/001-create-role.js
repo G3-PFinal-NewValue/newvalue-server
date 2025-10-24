@@ -13,10 +13,6 @@ export async function up(queryInterface, Sequelize) {
       allowNull: false,
       unique: true,
     },
-    description: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
   });
 }
 
