@@ -1,66 +1,46 @@
 'use strict';
 import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/database.js';
+import AppointmentModel from './AppointmentModel.js';
 
-export async function up(queryInterface, Sequelize) {
-  await queryInterface.createTable('session', {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
+const SessionModel = sequelize.define('Session', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  appointment_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: AppointmentModel,
+      key: 'id',
     },
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  },
+  summary: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  recommendations: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  materials_sent: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+}, {
+  tableName: 'session',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  deletedAt: 'deleted_at',
+  paranoid: true,
+});
 
-    appointment_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'appointment',
-        key: 'id',
-      },
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
-    },
+// Relación con Appointment
+SessionModel.belongsTo(AppointmentModel, { foreignKey: 'appointment_id' });
 
-    summary: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-
-    recommendations: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-
-    materials_sent: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-    },
-
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-    },
-
-    deleted_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-  }, {
-    tableName: 'session',
-    timestamps: true,      
-    paranoid: true,    
-    underscored: true,  
-  });
-  // índice útil para consultas por cita
-  await queryInterface.addIndex('session', ['appointment_id']);
-}
-
-export async function down(queryInterface, Sequelize) {
-  await queryInterface.dropTable('session');
-}
+export default SessionModel;

@@ -7,9 +7,9 @@ import {
     deactivatePatient,
     activatePatient,
     deletePatient,
-    getPatientSessions,
-    getPatientAppointments,
-    updateTherapyData,
+    // getPatientSessions,
+    // getPatientAppointments,
+    // updateTherapyData,
 } from "../controllers/patient.controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import roleMiddleware from "../middleware/roleMiddleware.js";
@@ -37,8 +37,8 @@ patientRouter.delete("/:id", authMiddleware, ownershipMiddleware, deletePatient)
 patientRouter.patch("/:id/activate", authMiddleware, roleMiddleware("admin"), activatePatient);
 
 // Endpoints específicos del paciente
-patientRouter.get("/:id/sessions", authMiddleware, ownershipMiddleware, getPatientSessions);
-patientRouter.get("/:id/appointments", authMiddleware, ownershipMiddleware, getPatientAppointments);
-patientRouter.patch("/:id/therapy-data", authMiddleware, ownershipMiddleware, updateTherapyData);
+// patientRouter.get("/:id/sessions", authMiddleware, ownershipMiddleware, getPatientSessions);
+// patientRouter.get("/:id/appointments", authMiddleware, ownershipMiddleware, getPatientAppointments);
+// patientRouter.patch("/:id/therapy-data", authMiddleware, ownershipMiddleware, updateTherapyData);
 
 export default patientRouter;

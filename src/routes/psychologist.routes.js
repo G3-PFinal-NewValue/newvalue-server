@@ -9,39 +9,36 @@ import {
   validatePsychologist,
   deletePsychologist
 } from "../controllers/psychologist.controller.js";
-import { authenticateToken } from "../middleware/authMiddleware.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 import multer from "multer";
 
-const router = Router();
+const psychologistRouter = Router();
 
 // Configuración de Multer
 const upload = multer({ dest: 'uploads/' }); // carpeta temporal
 
 // Crear perfil de psicólogo con foto opcional
-router.post('/', authenticateToken, upload.single('photo'), createPsychologistProfile);
+psychologistRouter.post('/', authMiddleware, upload.single('photo'), createPsychologistProfile);
 
 // Obtener todos los psicólogos
-router.get('/', authenticateToken, getAllPsychologists);
+psychologistRouter.get('/', authMiddleware, getAllPsychologists);
 
 // Obtener psicólogo por user_id
-router.get('/:id', authenticateToken, getPsychologistById);
+psychologistRouter.get('/:id', authMiddleware, getPsychologistById);
 
 // Actualizar perfil de psicólogo con posible nueva foto
-router.put('/:id', authenticateToken, upload.single('photo'), updatePsychologistProfile);
+psychologistRouter.put('/:id', authMiddleware, upload.single('photo'), updatePsychologistProfile);
 
 // Desactivar psicólogo
-router.patch('/:id/deactivate', authenticateToken, deactivatePsychologist);
+psychologistRouter.patch('/:id/deactivate', authMiddleware, deactivatePsychologist);
 
 // Activar psicólogo
-router.patch('/:id/activate', authenticateToken, activatePsychologist);
+psychologistRouter.patch('/:id/activate', authMiddleware, activatePsychologist);
 
 // Validar registro de psicólogo
-router.patch('/:id/validate', authenticateToken, validatePsychologist);
+psychologistRouter.patch('/:id/validate', authMiddleware, validatePsychologist);
 
 // Eliminar psicólogo 
-router.delete('/:id', authenticateToken, deletePsychologist);
+psychologistRouter.delete('/:id', authMiddleware, deletePsychologist);
 
-router.get("/test", (req, res) => {
-  res.json({ message: "Ruta de psicólogo activa ✅" });
-});
-export default router;
+export default psychologistRouter;
