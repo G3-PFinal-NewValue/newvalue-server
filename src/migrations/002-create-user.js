@@ -39,10 +39,10 @@ export async function up(queryInterface, Sequelize) {
     //   allowNull: true,
     //   unique: true,
     // },
-    // avatar: {
-    //   type: DataTypes.STRING,
-    //   allowNull: true,
-    // },
+    avatar: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
 
     // Rol del usuario (FK directa)
     role_id: {
