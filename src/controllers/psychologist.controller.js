@@ -38,9 +38,9 @@ export const getPsychologistById = async (req, res) => {
 // POST: crear perfil de psicólogo con foto opcional
 export const createPsychologistProfile = async (req, res) => {
   try {
-    const { user_id, license_number, specialty, professional_description } = req.body;
+    const user_id = req.user.id;
+    const { license_number, specialty, professional_description } = req.body;
 
-    if (!user_id) return res.status(400).json({ message: "El user_id es obligatorio" });
     if (!license_number) return res.status(400).json({ message: "El número de colegiado es obligatorio" });
 
     const existingProfile = await PsychologistModel.findOne({ where: { user_id } });
@@ -62,7 +62,7 @@ export const createPsychologistProfile = async (req, res) => {
       professional_description,
       photo: imageUrl,
       photo_public_id: publicId,
-      status: 'activate',     
+      status: 'active',     
       validated: false        
     });
     res.status(201).json({ message: 'Perfil de psicólogo/a creado correctamente', profile: newProfile });
@@ -124,7 +124,7 @@ export const deactivatePsychologist = async (req, res) => {
 export const activatePsychologist = async (req, res) => {
   try {
     const [rowsUpdated] = await PsychologistModel.update(
-      { status: 'activate' },
+      { status: 'active' },
       { where: { user_id: req.params.id } }
     );
 

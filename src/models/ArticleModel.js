@@ -20,6 +20,11 @@ const ArticleModel = sequelize.define('article', {
     onUpdate: 'CASCADE',
   },
 
+  category_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+
   title: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -44,7 +49,7 @@ const ArticleModel = sequelize.define('article', {
   tableName: 'article',
   timestamps: true,
   underscored: true,
-  paranoid:true
+  paranoid: true
 });
 
 export default ArticleModel;

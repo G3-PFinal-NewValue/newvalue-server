@@ -41,4 +41,7 @@ router.patch('/:id/validate', authenticateToken, validatePsychologist);
 // Eliminar psicólogo 
 router.delete('/:id', authenticateToken, deletePsychologist);
 
+router.get("/test", (req, res) => {
+  res.json({ message: "Ruta de psicólogo activa ✅" });
+});
 export default router;
