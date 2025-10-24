@@ -1,7 +1,6 @@
 import { DataTypes } from 'sequelize';
 
 export async function up(queryInterface, Sequelize) {
-  // Crear tabla Users
   await queryInterface.createTable('user', {
     id: {
       type: DataTypes.INTEGER,
@@ -45,19 +44,32 @@ export async function up(queryInterface, Sequelize) {
       allowNull: true,
     },
 
-    // Estado y fecha
+    // Rol del usuario (FK directa)
+    role_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'role',
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL',
+    },
+
+    // Estado
     status: {
       type: DataTypes.ENUM('active', 'inactive', 'suspended'),
       allowNull: false,
       defaultValue: 'active',
     },
+
+    // Fechas
     registration_date: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     },
 
-    // Marcas de tiempo opcionales
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -66,36 +78,13 @@ export async function up(queryInterface, Sequelize) {
     updatedAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
+      defaultValue: Sequelize.literal(
+        'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+      ),
     },
-  });
-
-  // Crear tabla intermedia user_roles
-  await queryInterface.createTable('user_role', {
-    user_id: {
-      type: DataTypes.INTEGER,
-      references: { model: 'user', key: 'id' },
-      onDelete: 'CASCADE'
-    },
-    role_id: {
-      type: DataTypes.INTEGER,
-      references: { model: 'role', key: 'id' },
-      onDelete: 'CASCADE'
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal('NOW()')
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal('NOW()')
-    }
   });
 }
 
 export async function down(queryInterface, Sequelize) {
-  await queryInterface.dropTable('user_role');
   await queryInterface.dropTable('user');
 }

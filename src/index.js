@@ -9,6 +9,7 @@ import appointmentRouter from './routes/appointment.routes.js';
 import availabilityRouter from './routes/availability.routes.js';
 import sessionRouter from './routes/session.routes.js';
 import articleRouter from './routes/article.routes.js';
+import RoleModel from './models/RoleModel.js';
 
 const app = express();
 
@@ -29,7 +30,6 @@ app.use('/session', sessionRouter);
 app.use('/article', articleRouter);
 
 // Ruta de prueba
-
 app.get('/', (req, res) => res.send('API Running...'));
 
 // Levantar servidor después de conectar DB
@@ -41,7 +41,7 @@ const startServer = async () => {
     console.log('🟢 Database connected');
 
     // Sincroniza todos los modelos y crea tablas si no existen
-    await sequelize.sync({ });
+    await sequelize.sync({});
     console.log('✅ Database synchronized');
 
     app.listen(PORT, () => {
@@ -52,5 +52,15 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+export const initializeRoles = async () => {
+  const roles = ['admin', 'patient', 'psychologist'];
 
-startServer();
+  for (const name of roles) {
+    await RoleModel.findOrCreate({ where: { name } });
+  }
+
+  console.log('✅ Roles verificados o creados correctamente');
+};
+
+await startServer();
+await initializeRoles();

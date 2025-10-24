@@ -1,10 +1,8 @@
 import bcrypt from 'bcrypt';
 import authService from '../services/auth.service.js';
 import UserModel from '../models/UserModel.js';
+import RoleModel from '../models/RoleModel.js';
 import { generateJWT } from '../utils/generateJWT.js';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 
 // Login con Google
@@ -35,13 +33,17 @@ export const registerController = async (req, res) => {
       return res.status(400).json({ message: 'El email ya está registrado' });
     }
 
+    // Establecer el rol por defecto si no se envía
+    const roleName = role ? role.toLowerCase() : 'patient';
+
+    // Buscar rol en la base de datos
+    const roleRecord = await RoleModel.findOne({ where: { name: roleName } });
+    if (!roleRecord) {
+      return res.status(400).json({ message: 'Rol no válido o no encontrado.' });
+    }
+
     // Hashear contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Rol por defecto (patient)
-    const userRole = role && ['patient', 'psychologist'].includes(role)
-      ? role
-      : 'patient';
 
     // Crear usuario
     const newUser = await UserModel.create({
@@ -49,12 +51,12 @@ export const registerController = async (req, res) => {
       last_name,
       email,
       password_hash: hashedPassword,
-      role: userRole,
+      role_id: roleRecord.id,
       status: 'active',
     });
 
     // Generar token JWT
-    const token = generateJWT(newUser);
+    const token = generateJWT({id: newUser.id, email: newUser.email, role: roleRecord.name});
 
     res.status(201).json({
       message: 'Usuario registrado exitosamente',
@@ -63,7 +65,7 @@ export const registerController = async (req, res) => {
         first_name: newUser.first_name,
         last_name: newUser.last_name,
         email: newUser.email,
-        role: newUser.role,
+        role: roleRecord.name,
       },
       token,
     });
@@ -84,7 +86,7 @@ export const loginController = async (req, res) => {
     }
 
     //Buscar usuario
-    const user = await UserModel.findOne({ where: { email } });
+    const user = await UserModel.findOne({ where: { email }, include: RoleModel, attributes:['id', 'name'],});
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
@@ -100,11 +102,15 @@ export const loginController = async (req, res) => {
       return res.status(403).json({ message: 'Cuenta inactiva o suspendida.' });
     }
 
-    const token = generateJWT(user);
+    const token = generateJWT({
+      id: user.id,
+      email: user.email,
+      role: user.role.name,
+    });
 
     res.status(200).json({
       message: 'Inicio de sesión exitoso',
-      user: { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, role: user.role },
+      user: { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, role: user.role.name },
       token,
     });
   } catch (error) {

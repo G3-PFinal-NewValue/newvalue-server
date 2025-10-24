@@ -1,5 +1,7 @@
 import { DataTypes } from 'sequelize';
 import {sequelize} from '../config/database.js';
+import RoleModel from './RoleModel.js';
+
 
 const UserModel = sequelize.define('user',
   {
@@ -14,6 +16,9 @@ const UserModel = sequelize.define('user',
       type: DataTypes.STRING(100),
       unique: true,
       allowNull: false,
+      validate: {
+        isEmail: true,
+      },
     },
     password_hash: {
       type: DataTypes.STRING(255),
@@ -26,6 +31,16 @@ const UserModel = sequelize.define('user',
     last_name: {
       type: DataTypes.STRING(100),
       allowNull: true,
+    },
+    //role 
+    role_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
+      references: {
+        model: 'role',
+        key: 'id',
+      },
     },
     phone: {
       type: DataTypes.STRING(20),
@@ -61,5 +76,10 @@ const UserModel = sequelize.define('user',
     timestamps: true, 
   }
 );
+
+//Relación 
+UserModel.belongsTo(RoleModel, { foreignKey: 'role_id' });
+RoleModel.hasMany(UserModel, { foreignKey: 'role_id' });
+
 
 export default UserModel;
