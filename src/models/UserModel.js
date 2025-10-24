@@ -61,21 +61,21 @@ const UserModel = sequelize.define('user',
       allowNull: false,
     },
     // Campos específicos de Google Login
-    googleId: {
-      type: DataTypes.STRING,
-      unique: true,
-      allowNull: true, // null si no se usa Google
-    },
-    avatar: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
+    // googleId: {
+    //   type: DataTypes.STRING,
+    //   unique: true,
+    //   allowNull: true, // null si no se usa Google
+    // },
+    // avatar: {
+    //   type: DataTypes.STRING,
+    //   allowNull: true,
+    // },
   },
   {
     tableName: 'user',
     timestamps: true,
-    paranoid: true,
     underscored: true,
+    paranoid: true,
   }
 );
 

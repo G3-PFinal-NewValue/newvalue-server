@@ -20,11 +20,6 @@ export async function up(queryInterface, Sequelize) {
       unique: true
     },
 
-    specialty: {
-      type: DataTypes.STRING(100),
-      allowNull: true
-    },
-
     professional_description: {
       type: DataTypes.TEXT,
       allowNull: true

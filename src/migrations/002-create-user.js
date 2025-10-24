@@ -34,11 +34,11 @@ export async function up(queryInterface, Sequelize) {
     },
 
     // Google login
-    googleId: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      unique: true,
-    },
+    // googleId: {
+    //   type: DataTypes.STRING,
+    //   allowNull: true,
+    //   unique: true,
+    // },
     avatar: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -53,7 +53,7 @@ export async function up(queryInterface, Sequelize) {
         key: 'id',
       },
       onUpdate: 'CASCADE',
-      onDelete: 'SET NULL',
+      onDelete: 'RESTRICT',
     },
 
     // Estado
@@ -70,17 +70,21 @@ export async function up(queryInterface, Sequelize) {
       defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     },
 
-    createdAt: {
+    created_at: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     },
-    updatedAt: {
+    updated_at: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: Sequelize.literal(
         'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
       ),
+    },
+      deleted_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   });
 }
