@@ -1,45 +1,45 @@
-import SpecialtyModel from "../models/SpecialtyModel.js";
+import SpecialityModel from "../models/SpecialityModel.js";
 
 export const getAllSpecialties = async (req, res) => {
   try {
-    const specialties = await SpecialtyModel.findAll();
+    const specialties = await SpecialityModel.findAll();
     res.json(specialties);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-export const createSpecialty = async (req, res) => {
+export const createSpeciality = async (req, res) => {
   const { name } = req.body;
   try {
-    const newSpecialty = await SpecialtyModel.create({ name });
-    res.status(201).json(newSpecialty);
+    const newSpeciality = await SpecialityModel.create({ name });
+    res.status(201).json(newSpeciality);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-export const updateSpecialty = async (req, res) => {
+export const updateSpeciality = async (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
   try {
-    const specialty = await SpecialtyModel.findByPk(id);
-    if (!specialty) return res.status(404).json({ message: "Specialty not found" });
-    specialty.name = name;
-    await specialty.save();
-    res.json(specialty);
+    const speciality = await SpecialityModel.findByPk(id);
+    if (!speciality) return res.status(404).json({ message: "Speciality not found" });
+    speciality.name = name;
+    await speciality.save();
+    res.json(speciality);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-export const deleteSpecialty = async (req, res) => {
+export const deleteSpeciality = async (req, res) => {
   const { id } = req.params;
   try {
-    const specialty = await SpecialtyModel.findByPk(id);
-    if (!specialty) return res.status(404).json({ message: "Specialty not found" });
-    await specialty.destroy();
-    res.json({ message: "Specialty deleted" });
+    const speciality = await SpecialityModel.findByPk(id);
+    if (!speciality) return res.status(404).json({ message: "Speciality not found" });
+    await speciality.destroy();
+    res.json({ message: "Speciality deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

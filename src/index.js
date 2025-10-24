@@ -10,6 +10,7 @@ import availabilityRouter from './routes/availability.routes.js';
 import sessionRouter from './routes/session.routes.js';
 import articleRouter from './routes/article.routes.js';
 import RoleModel from './models/RoleModel.js';
+import './models/associations.js';
 
 const app = express();
 

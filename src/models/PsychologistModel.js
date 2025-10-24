@@ -1,6 +1,6 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
-import SpecialtyModel from "./SpecialityModel.js";
+import SpecialityModel from "./SpecialityModel.js";
 
 
 const PsychologistModel = sequelize.define("psychologist", {
@@ -29,11 +29,11 @@ const PsychologistModel = sequelize.define("psychologist", {
     }
   },
 
-  specialty_id: {
+  speciality_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: SpecialtyModel,
+      model: SpecialityModel,
       key: "id"
     }
   },
