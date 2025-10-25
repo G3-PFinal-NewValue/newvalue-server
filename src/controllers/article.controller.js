@@ -1,15 +1,20 @@
 import ArticleModel from '../models/ArticleModel.js';
 import PsychologistModel from '../models/PsychologistModel.js';
+import { CategoryArticleModel } from '../models/associations.js';
 
 export const getAllArticles = async (req, res) => {
   try {
+    const { category } = req.query;
+    const whereCondition = {};
+    if (category) {
+      whereCondition['$category.name$'] = category;
+    }
     const articles = await ArticleModel.findAll({
       include: [
-        {
-          model: PsychologistModel,
+          { model: PsychologistModel,
           as: 'author',
-          attributes: ['user_id', 'name', 'email'],
-        },
+          attributes: ['user_id', 'name', 'email']},
+           { model: CategoryArticleModel, as: 'category', attributes: ['id', 'name'] }
       ],
       order: [['created_at', 'DESC']],
     });
@@ -30,6 +35,11 @@ export const getArticleById = async (req, res) => {
           as: 'author',
           attributes: ['user_id', 'name', 'email'],
         },
+        {
+          model: CategoryArticleModel,
+          as: 'category',
+          attributes: ['id', 'name'],
+        },
       ],
     });
     if (!article) {
@@ -47,6 +57,13 @@ export const createArticle = async (req, res) => {
     // Validar rol
     if (!req.user || !req.user.isPsychologist) {
       return res.status(403).json({ message: 'Only psychologists can create articles.' });
+    }
+
+     if (req.body.category_id) {
+      const categoryExists = await CategoryArticleModel.findByPk(req.body.category_id);
+      if (!categoryExists) {
+        return res.status(400).json({ message: 'Invalid category ID' });
+      }
     }
 
     const newArticle = await ArticleModel.create({

@@ -1,5 +1,7 @@
 import { DataTypes } from "sequelize";
-import { sequelize } from "../config/database";
+import { sequelize } from "../config/database.js";
+import SpecialityModel from "./SpecialityModel.js";
+
 
 const PsychologistModel = sequelize.define("psychologist", {
   user_id: {
@@ -24,15 +26,6 @@ const PsychologistModel = sequelize.define("psychologist", {
         args: [3, 50],
         msg: "El número de colegiado debe tener entre 3 y 50 caracteres."
       }
-    }
-  },
-
-  specialty_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: SpecialtyModel,
-      key: "id"
     }
   },
 
@@ -72,7 +65,8 @@ const PsychologistModel = sequelize.define("psychologist", {
 }, {
   tableName: "psychologist",
   timestamps: true,
-  paranoid:true
+  paranoid:true,
+  underscored: true
 });
 
 export default PsychologistModel;

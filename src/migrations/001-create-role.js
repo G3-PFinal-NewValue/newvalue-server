@@ -1,20 +1,21 @@
-import { DataTypes } from "sequelize";
+// src/migrations/001-create-role.js
+import { DataTypes } from 'sequelize';
 
 export async function up(queryInterface, Sequelize) {
-  await queryInterface.createTable("role", {
+  await queryInterface.createTable('role', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
     },
     name: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      unique: true
-    }
+      unique: true,
+    },
   });
 }
 
-export async function down(queryInterface, Sequelize) {
-  await queryInterface.dropTable("role");
+export async function down(queryInterface) {
+  await queryInterface.dropTable('role');
 }

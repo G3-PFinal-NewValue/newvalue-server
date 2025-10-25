@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../config/db.js';
+import { sequelize } from '../config/database.js';
 import PsychologistModel from './PsychologistModel.js';
 
 const ArticleModel = sequelize.define('article', {
@@ -18,6 +18,11 @@ const ArticleModel = sequelize.define('article', {
     },
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
+  },
+
+  category_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
   },
 
   title: {
@@ -44,7 +49,7 @@ const ArticleModel = sequelize.define('article', {
   tableName: 'article',
   timestamps: true,
   underscored: true,
-  paranoid:true
+  paranoid: true
 });
 
 export default ArticleModel;

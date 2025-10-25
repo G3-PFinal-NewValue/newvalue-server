@@ -5,56 +5,90 @@ export async function up(queryInterface, Sequelize) {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
     },
-    googleId: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
-    },
+
+    // Campos de autenticación
     email: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(100),
       allowNull: false,
-      unique: true
+      unique: true,
     },
-    name: {
-      type: DataTypes.STRING
+    password_hash: {
+      type: DataTypes.STRING(255),
+      allowNull: true, // null si el usuario usa login con Google
     },
+
+    // Campos personales
+    first_name: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
+    last_name: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    phone: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+    },
+
+    // Google login
+    // googleId: {
+    //   type: DataTypes.STRING,
+    //   allowNull: true,
+    //   unique: true,
+    // },
     avatar: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      allowNull: true,
     },
+
+    // Rol del usuario (FK directa)
+    role_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'role',
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'RESTRICT',
+    },
+
+    // Estado
     status: {
-      type: DataTypes.ENUM('active', 'inactive'),
-      defaultValue: 'active'
+      type: DataTypes.ENUM('active', 'inactive', 'suspended'),
+      allowNull: false,
+      defaultValue: 'active',
     },
+
+    // Fechas
+    registration_date: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+    },
+
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: Sequelize.literal('NOW()')
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     },
     updated_at: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: Sequelize.literal('NOW()')
-    }
-  });
-
-  // Crear tabla intermedia user_roles
-  await queryInterface.createTable('user_role', {
-    user_id: {
-      type: DataTypes.INTEGER,
-      references: { model: 'user', key: 'id' },
-      onDelete: 'CASCADE'
+      defaultValue: Sequelize.literal(
+        'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+      ),
     },
-    role_id: {
-      type: DataTypes.INTEGER,
-      references: { model: 'role', key: 'id' },
-      onDelete: 'CASCADE'
-    }
+      deleted_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   });
 }
 
 export async function down(queryInterface, Sequelize) {
-  await queryInterface.dropTable('user_role');
   await queryInterface.dropTable('user');
 }

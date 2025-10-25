@@ -1,16 +1,16 @@
 import { Router } from "express";
 import {
   getAllSpecialties,
-  createSpecialty,
-  updateSpecialty,
-  deleteSpecialty
-} from "../controllers/specialtyController.js";
+  createSpeciality,
+  updateSpeciality,
+  deleteSpeciality
+} from "../controllers/specialityController.js";
 
 const router = Router();
 
 router.get("/", getAllSpecialties);
-router.post("/", createSpecialty);
-router.put("/:id", updateSpecialty);
-router.delete("/:id", deleteSpecialty);
+router.post("/", createSpeciality);
+router.put("/:id", updateSpeciality);
+router.delete("/:id", deleteSpeciality);
 
 export default router;
