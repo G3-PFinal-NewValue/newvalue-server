@@ -4,16 +4,51 @@ import UserModel from '../models/UserModel.js';
 import RoleModel from '../models/RoleModel.js';
 import { generateJWT } from '../utils/generateJWT.js';
 
-
 // Login con Google
 export const googleLogin = async (req, res) => {
   try {
+    console.log('=== CONTROLLER: googleLogin ===');
     const { token } = req.body;
+    
+    console.log('1. Token recibido en body:', token ? 'SÍ' : 'NO');
+    
+    if (!token) {
+      console.log('❌ No se recibió token');
+      return res.status(400).json({ message: 'Token requerido' });
+    }
+
+    console.log('2. Llamando a authService.googleLogin...');
     const data = await authService.googleLogin(token);
+    
+    console.log('3. Datos recibidos de authService:', data ? 'SÍ' : 'NO');
+    
+    if (!data) {
+      console.error('❌ authService.googleLogin devolvió datos vacíos');
+      return res.status(500).json({ message: 'Error al procesar login de Google' });
+    }
+
+    console.log('4. Verificando data.user...', data.user ? 'SÍ' : 'NO');
+    
+    if (!data.user) {
+      console.error('❌ authService.googleLogin no devolvió usuario');
+      console.error('Datos completos:', JSON.stringify(data, null, 2));
+      return res.status(400).json({ message: 'User is not defined' });
+    }
+
+    console.log('✅ Login con Google exitoso para:', data.user.email);
+    console.log('5. Enviando respuesta al cliente...');
     res.status(200).json(data);
+    
   } catch (error) {
-    console.error(error);
-    res.status(400).send({message:error.message});
+    console.error('❌ ERROR CAPTURADO en googleLogin controller:');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    res.status(500).json({ 
+      message: error.message || 'Error interno del servidor',
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
@@ -56,7 +91,11 @@ export const registerController = async (req, res) => {
     });
 
     // Generar token JWT
-    const token = generateJWT({id: newUser.id, email: newUser.email, role: roleRecord.name});
+    const token = generateJWT({
+      id: newUser.id,
+      email: newUser.email,
+      role: roleRecord.name
+    });
 
     res.status(201).json({
       message: 'Usuario registrado exitosamente',
@@ -75,18 +114,26 @@ export const registerController = async (req, res) => {
   }
 };
 
-//Login con email y contraseña
+// Login con email y contraseña
 export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-     // Verificar que se envíen los campos
+    // Verificar que se envíen los campos
     if (!email || !password) {
       return res.status(400).json({ message: 'Correo y contraseña requeridos.' });
     }
 
-    //Buscar usuario
-    const user = await UserModel.findOne({ where: { email }, include: { model: RoleModel, attributes:['id', 'name']}});
+    // Buscar usuario con la relación 'role'
+    const user = await UserModel.findOne({ 
+      where: { email }, 
+      include: { 
+        model: RoleModel, 
+        as: 'role',
+        attributes: ['id', 'name']
+      }
+    });
+
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
@@ -110,7 +157,13 @@ export const loginController = async (req, res) => {
 
     res.status(200).json({
       message: 'Inicio de sesión exitoso',
-      user: { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, role: user.role.name },
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        first_name: user.first_name, 
+        last_name: user.last_name, 
+        role: user.role.name 
+      },
       token,
     });
   } catch (error) {
