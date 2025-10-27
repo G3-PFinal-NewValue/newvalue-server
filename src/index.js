@@ -56,7 +56,7 @@ const startServer = async () => {
   }
 };
 export const initializeRoles = async () => {
-  const roles = ['admin', 'patient', 'psychologist'];
+  const roles = ['admin', 'patient', 'psychologist','pending'];
 
   for (const name of roles) {
     await RoleModel.findOrCreate({ where: { name } });
