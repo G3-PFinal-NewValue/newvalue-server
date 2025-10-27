@@ -1,12 +1,13 @@
 import UserModel from "../models/UserModel.js";
 import RoleModel from "../models/RoleModel.js";
+import { generateJWT } from "../utils/generateJWT.js";
 
 export const getAllUsers = async (req, res) => {
     try {
         const users = await UserModel.findAll({
             include: {
                 model: RoleModel,
-                through: { attributes: [] }, 
+                as: 'role',
             },
         });
         res.status(200).json(users);
@@ -21,7 +22,7 @@ export const getUserById = async (req, res) => {
         const user = await UserModel.findByPk(req.params.id, {
             include: {
                 model: RoleModel,
-                through: { attributes: [] },
+                as: 'role',
             },
         });
         if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
@@ -107,17 +108,71 @@ export const deleteUser = async (req, res) => {
 
 export const assignRole = async (req, res) => {
     try {
-        const { roleName } = req.body;
-        const user = await UserModel.findByPk(req.params.id);
-        if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+        console.log('=== assignRole ===');
+        const { userId, roleName } = req.body;
+        console.log('1. Datos recibidos:', { userId, roleName });
 
+        // Validación de entrada
+        if (!userId || !roleName) {
+            return res.status(400).json({ message: 'userId y roleName son requeridos' });
+        }
+
+        // Buscar usuario
+        console.log('2. Buscando usuario con id:', userId);
+        const user = await UserModel.findByPk(userId);
+        if (!user) {
+            console.log('❌ Usuario no encontrado');
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+        console.log('3. Usuario encontrado:', user.email);
+
+        // Buscar rol
+        console.log('4. Buscando rol:', roleName);
         const role = await RoleModel.findOne({ where: { name: roleName } });
-        if (!role) return res.status(404).json({ message: "Rol no encontrado" });
+        if (!role) {
+            console.log('❌ Rol no encontrado');
+            return res.status(404).json({ message: 'Rol no encontrado' });
+        }
+        console.log('5. Rol encontrado, id:', role.id);
 
-        await user.addRole(role);
-        res.status(200).json({ message: `Rol ${role.name} asignado al usuario`, user });
+        // Asignar rol
+        console.log('6. Asignando rol al usuario...');
+        user.role_id = role.id;
+        await user.save();
+        console.log('7. Rol guardado');
+
+        // Recargar con la relación
+        console.log('8. Recargando usuario con relación role...');
+        await user.reload({ include: { model: RoleModel, as: 'role' } });
+        console.log('9. Usuario recargado. Rol actual:', user.role?.name);
+
+        // Generar nuevo token con el rol actualizado
+        console.log('10. Generando nuevo JWT...');
+        const token = generateJWT({
+            id: user.id,
+            email: user.email,
+            role: user.role.name,
+        });
+        console.log('11. JWT generado');
+
+        // ESTA ES LA PARTE CRÍTICA - Devolver usuario completo y token
+        const response = {
+            user: {
+                id: user.id,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                avatar: user.avatar,
+                role: user.role.name,
+            },
+            token,
+        };
+
+        console.log('12. Enviando respuesta completa:', response);
+        res.status(200).json(response);
+        
     } catch (error) {
-        console.error("Error al asignar rol:", error);
-        res.status(400).json({ message: error.message });
+        console.error("❌ Error al asignar rol:", error);
+        res.status(500).json({ message: error.message });
     }
 };
