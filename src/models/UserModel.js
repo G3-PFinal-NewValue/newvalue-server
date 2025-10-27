@@ -2,7 +2,6 @@ import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 import RoleModel from './RoleModel.js';
 
-
 const UserModel = sequelize.define('user',
   {
     id: {
@@ -11,7 +10,7 @@ const UserModel = sequelize.define('user',
       autoIncrement: true,
     },
 
-    // Campos comunes
+    // Autenticación
     email: {
       type: DataTypes.STRING(100),
       unique: true,
@@ -22,8 +21,10 @@ const UserModel = sequelize.define('user',
     },
     password_hash: {
       type: DataTypes.STRING(255),
-      allowNull: true, // puede ser null si el registro es con Google
+      allowNull: true, // Puede ser null si el usuario se registra con Google
     },
+
+    // Datos personales
     first_name: {
       type: DataTypes.STRING(100),
       allowNull: true,
@@ -32,7 +33,22 @@ const UserModel = sequelize.define('user',
       type: DataTypes.STRING(100),
       allowNull: true,
     },
-    //role 
+    phone: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      validate: {
+        is: /^[+]?[\d\s()-]+$/i,
+      },
+    },
+
+    // Google login
+    google_id: {
+      type: DataTypes.STRING,
+      unique: true,
+      allowNull: true,
+    },
+
+    // Rol
     role_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -42,6 +58,7 @@ const UserModel = sequelize.define('user',
         key: 'id',
       },
     },
+<<<<<<< HEAD
     phone: {
       type: DataTypes.STRING(20),
       allowNull: true,
@@ -51,6 +68,10 @@ const UserModel = sequelize.define('user',
       },
     },
     // Estado del Usuario
+=======
+
+    // Estado y fechas
+>>>>>>> develop
     registration_date: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
@@ -60,16 +81,6 @@ const UserModel = sequelize.define('user',
       defaultValue: 'active',
       allowNull: false,
     },
-    // Campos específicos de Google Login
-    // googleId: {
-    //   type: DataTypes.STRING,
-    //   unique: true,
-    //   allowNull: true, // null si no se usa Google
-    // },
-    // avatar: {
-    //   type: DataTypes.STRING,
-    //   allowNull: true,
-    // },
   },
   {
     tableName: 'user',
@@ -79,9 +90,8 @@ const UserModel = sequelize.define('user',
   }
 );
 
-//Relación 
+// Relación con Role
 UserModel.belongsTo(RoleModel, { foreignKey: 'role_id' });
 RoleModel.hasMany(UserModel, { foreignKey: 'role_id' });
-
 
 export default UserModel;
