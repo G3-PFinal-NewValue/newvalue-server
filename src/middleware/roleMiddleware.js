@@ -12,7 +12,7 @@ const roleMiddleware = (...allowedRoles) => {
     }
 
     // Comprueba si el rol del usuario está permitido
-    if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+    if (allowedRoles.length && !allowedRoles.includes(userRole)) {
       return res.status(403).json({ message: 'No autorizado' });
     }
 

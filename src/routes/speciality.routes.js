@@ -1,16 +1,14 @@
-import { Router } from "express";
-import {
-  getAllSpecialties,
-  createSpeciality,
-  updateSpeciality,
-  deleteSpeciality
-} from "../controllers/specialityController.js";
+import { Router } from 'express';
+import { getAllSpecialities, createSpeciality } from '../controllers/speciality.controller.js';
+import authMiddleware from '../middleware/authMiddleware.js';
+import roleMiddleware from '../middleware/roleMiddleware.js';
 
-const router = Router();
+const specialityRouter = Router();
 
-router.get("/", getAllSpecialties);
-router.post("/", createSpeciality);
-router.put("/:id", updateSpeciality);
-router.delete("/:id", deleteSpeciality);
+// Cualquiera autenticado puede verlas
+specialityRouter.get('/', authMiddleware, getAllSpecialities);
 
-export default router;
+// Solo psicólogos o admins pueden crear nuevas
+specialityRouter.post('/', authMiddleware, roleMiddleware('psychologist', 'admin'), createSpeciality);
+
+export default specialityRouter;
