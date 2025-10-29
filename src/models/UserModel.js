@@ -58,20 +58,8 @@ const UserModel = sequelize.define('user',
         key: 'id',
       },
     },
-<<<<<<< HEAD
-    phone: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
-      validate: {
-        is: /^[+]?[\d\s()-]+$/i, // opcional: valida formato de teléfono
-
-      },
-    },
-    // Estado del Usuario
-=======
 
     // Estado y fechas
->>>>>>> develop
     registration_date: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

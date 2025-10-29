@@ -1,46 +1,39 @@
-import SpecialityModel from "../models/SpecialityModel.js";
+import SpecialityModel from '../models/SpecialityModel.js';
 
-export const getAllSpecialties = async (req, res) => {
+// Obtener todas las especialidades
+export const getAllSpecialities = async (req, res) => {
   try {
-    const specialties = await SpecialityModel.findAll();
-    res.json(specialties);
+    const specialities = await SpecialityModel.findAll({
+      attributes: ['id', 'name'],
+      order: [['name', 'ASC']],
+    });
+    res.status(200).json(specialities);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error al obtener especialidades:', error);
+    res.status(500).json({ message: 'Error al obtener especialidades', error });
   }
 };
 
+// Crear una nueva especialidad manualmente
 export const createSpeciality = async (req, res) => {
-  const { name } = req.body;
   try {
-    const newSpeciality = await SpecialityModel.create({ name });
-    res.status(201).json(newSpeciality);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
+    const { name } = req.body;
 
-export const updateSpeciality = async (req, res) => {
-  const { id } = req.params;
-  const { name } = req.body;
-  try {
-    const speciality = await SpecialityModel.findByPk(id);
-    if (!speciality) return res.status(404).json({ message: "Speciality not found" });
-    speciality.name = name;
-    await speciality.save();
-    res.json(speciality);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ message: 'El nombre de la especialidad es obligatorio' });
+    }
 
-export const deleteSpeciality = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const speciality = await SpecialityModel.findByPk(id);
-    if (!speciality) return res.status(404).json({ message: "Speciality not found" });
-    await speciality.destroy();
-    res.json({ message: "Speciality deleted" });
+    const [speciality, created] = await SpecialityModel.findOrCreate({
+      where: { name: name.trim() },
+    });
+
+    if (!created) {
+      return res.status(409).json({ message: 'La especialidad ya existe' });
+    }
+
+    res.status(201).json({ message: 'Especialidad creada correctamente', speciality });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error al crear especialidad:', error);
+    res.status(500).json({ message: 'Error al crear especialidad', error });
   }
 };
