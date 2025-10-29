@@ -9,6 +9,7 @@ import sessionRouter from './routes/session.routes.js';
 import articleRouter from './routes/article.routes.js';
 import categoryRouter from './routes/category.routes.js';
 import userRouter from './routes/user.routes.js';
+import adminRoutes from "./routes/admin.routes.js"
 
 
 const app = express();

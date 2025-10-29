@@ -12,6 +12,7 @@ import articleRouter from './routes/article.routes.js';
 import RoleModel from './models/RoleModel.js';
 import userRouter from './routes/user.routes.js';
 import './models/associations.js';
+import adminRoutes from "./routes/admin.routes.js"
 
 const app = express();
 
@@ -31,6 +32,8 @@ app.use('/availability', availabilityRouter);
 app.use('/session', sessionRouter);
 app.use('/article', articleRouter);
 app.use('/user', userRouter); // Esto hará que /user/assign-role funcione
+app.use("/admin", adminRoutes);
+
 
 // Ruta de prueba
 app.get('/', (req, res) => res.send('API Running...'));
@@ -56,7 +59,7 @@ const startServer = async () => {
   }
 };
 export const initializeRoles = async () => {
-  const roles = ['admin', 'patient', 'psychologist'];
+  const roles = ['admin', 'patient', 'psychologist', 'pending'];
 
   for (const name of roles) {
     await RoleModel.findOrCreate({ where: { name } });
