@@ -15,8 +15,8 @@ const PsychologistSpeciality = sequelize.define(
 );
 
 // Relación muchos a muchos Psychologist <-> Speciality
-PsychologistModel.belongsToMany(SpecialityModel, { through: PsychologistSpeciality, foreignKey: "psychologist_id" });
-SpecialityModel.belongsToMany(PsychologistModel, { through: PsychologistSpeciality, foreignKey: "speciality_id" });
+PsychologistModel.belongsToMany(SpecialityModel, { through: PsychologistSpeciality, as: "specialities", foreignKey: "psychologist_id" });
+SpecialityModel.belongsToMany(PsychologistModel, { through: PsychologistSpeciality, as: "psychologists", foreignKey: "speciality_id" });
 
 // Relación Category <-> Article (una categoría tiene muchos artículos)
 CategoryArticleModel.hasMany(ArticleModel, {

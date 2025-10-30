@@ -12,6 +12,7 @@ import articleRouter from './routes/article.routes.js';
 import RoleModel from './models/RoleModel.js';
 import userRouter from './routes/user.routes.js';
 import './models/associations.js';
+import specialityRouter from './routes/speciality.routes.js';
 
 
 const app = express();
@@ -31,7 +32,8 @@ app.use ('/appointment', appointmentRouter)
 app.use('/availability', availabilityRouter);
 app.use('/session', sessionRouter);
 app.use('/article', articleRouter);
-app.use('/user', userRouter); // Esto hará que /user/assign-role funcione
+app.use('/user', userRouter);
+app.use('/speciality', specialityRouter);
 
 // Ruta de prueba
 app.get('/', (req, res) => res.send('API Running...'));
