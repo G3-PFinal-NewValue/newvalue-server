@@ -32,17 +32,19 @@ ArticleModel.belongsTo(CategoryArticleModel, {
   as: "category",
 });
 
-// Relación Psychologist <-> Article (un psicólogo escribe muchos artículos)
-PsychologistModel.hasMany(ArticleModel, {
+// Relación User <-> Article 
+UserModel.hasMany(ArticleModel, {
   foreignKey: "author_id",
+  as: "articles",
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
 
-// Un artículo pertenece a un psicólogo (autor)
-ArticleModel.belongsTo(PsychologistModel, {
+// Un artículo pertenece al admin
+ArticleModel.belongsTo(UserModel, {
   foreignKey: "author_id",
   as: "author",
 });
+
 
 export { UserModel, RoleModel, PsychologistSpeciality, PsychologistModel, SpecialityModel, ArticleModel, CategoryArticleModel };

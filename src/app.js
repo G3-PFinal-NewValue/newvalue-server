@@ -11,6 +11,7 @@ import categoryRouter from './routes/category.routes.js';
 import userRouter from './routes/user.routes.js';
 
 
+
 const app = express();
 
 // Middlewares
