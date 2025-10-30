@@ -1,7 +1,7 @@
 export async function up(queryInterface, Sequelize) {
   await queryInterface.bulkInsert("user", [
     {
-      // googleId: "", 
+      // google_id: "", 
       email: "coramind.newvalue@gmail.com",
       first_name: "Admin",
       last_name: "Cora Mind",

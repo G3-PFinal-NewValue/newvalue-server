@@ -5,7 +5,9 @@ import PsychologistModel from "./PsychologistModel.js";
 import SpecialityModel from "./SpecialityModel.js";
 import ArticleModel from "./ArticleModel.js"
 import CategoryArticleModel from "./CategoryArticleModel.js"
-
+import AppointmentModel from "./AppointmentModel.js";
+import AvailabilityModel from "./AvailabilityModel.js";
+import SessionModel from "./SessionModel.js";
 
 // Tabla intermedia para Psychologist <-> Speciality
 const PsychologistSpeciality = sequelize.define(
@@ -45,4 +47,59 @@ ArticleModel.belongsTo(PsychologistModel, {
   as: "author",
 });
 
-export { UserModel, RoleModel, PsychologistSpeciality, PsychologistModel, SpecialityModel, ArticleModel, CategoryArticleModel };
+// ------------------------------------
+// RELACIÓN PSYCHOLOGIST <-> AVAILABILITY 
+// ------------------------------------
+PsychologistModel.hasMany(AvailabilityModel, {
+  foreignKey: "psychologist_id",
+  as: "availabilities",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+AvailabilityModel.belongsTo(PsychologistModel, {
+  foreignKey: "psychologist_id",
+  as: "psychologist",
+});
+
+// ------------------------------------
+// RELACIÓN AVAILABILITY <-> APPOINTMENT ✅
+// ------------------------------------
+AvailabilityModel.hasOne(AppointmentModel, {
+  foreignKey: "availability_id",
+  as: "appointment",
+  onDelete: "SET NULL", // si se elimina la cita, la disponibilidad queda libre
+  onUpdate: "CASCADE",
+});
+
+AppointmentModel.belongsTo(AvailabilityModel, {
+  foreignKey: "availability_id",
+  as: "availability",
+});
+
+
+// ------------------------------------
+// (Opcional) RELACIÓN PSYCHOLOGIST/PATIENT <-> APPOINTMENT
+// ------------------------------------
+PsychologistModel.hasMany(AppointmentModel, {
+  foreignKey: "psychologist_id",
+  as: "appointments",
+  onDelete: "CASCADE",
+});
+AppointmentModel.belongsTo(PsychologistModel, {
+  foreignKey: "psychologist_id",
+  as: "psychologist",
+});
+
+UserModel.hasMany(AppointmentModel, {
+  foreignKey: "patient_id",
+  as: "appointments",
+  onDelete: "CASCADE",
+});
+AppointmentModel.belongsTo(UserModel, {
+  foreignKey: "patient_id",
+  as: "patient",
+});
+
+
+export { UserModel, RoleModel, PsychologistSpeciality, PsychologistModel, SpecialityModel, ArticleModel, CategoryArticleModel, AvailabilityModel, AppointmentModel, SessionModel};

@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
+    "db:seed":"node src/seeders",
     "seed:speciality": "node src/seeders/003-speciality.js"
   },
   "keywords": [],

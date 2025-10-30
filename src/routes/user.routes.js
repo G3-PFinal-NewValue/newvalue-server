@@ -3,6 +3,6 @@ import { assignRole } from '../controllers/user.controller.js';
 
 const userRouter = express.Router();
 
-userRouter.patch('/assign-role', assignRole); // <== esta es la ruta que busca tu frontend
+userRouter.patch('/assign-role', assignRole); 
 
 export default userRouter;

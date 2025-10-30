@@ -1,5 +1,6 @@
 import AppointmentModel from '../models/AppointmentModel.js';
 import UserModel from '../models/UserModel.js';
+import AvailabilityModel from '../models/AvailabilityModel.js';
 import SessionModel from '../models/SessionModel.js';
 import {sequelize} from "../config/database.js";
 
@@ -87,47 +88,51 @@ export const createAppointment = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
     const patient_id = req.user.id;
-    const { psychologist_id, date, session_link, duration_minutes, notes } = req.body;
+    const { availability_id , psychologist_id, session_link, duration_minutes, notes } = req.body;
 
     //Validaciones Basicas
-    if (!psychologist_id || !date) {
+    if (!availability_id || !psychologist_id) {
       await transaction.rollback();
         return res.status(400).json({message:'Faltan datos obligatorios'})
     }
 
-    // Validar que la fecha sea futura
-    if (new Date(date) < new Date()) {
+    // Validar la disponibilidad seleccionada
+    const availability = await AvailabilityModel.findByPk(availability_id, { transaction });
+    if (!availability) {
       await transaction.rollback();
-      return res.status(400).json({ message: 'La fecha de la cita debe ser futura'});
+      return res.status(400).json({ message: 'La disponibilidad seleccionada no existe.'});
     }
 
-    //Revisar disponibilidad del psicólogo
-    const overlapping = await AppointmentModel.findOne({
-      where: {
-        psychologist_id,
-        date
-      },
-      transaction,
-    });
-
-    if (overlapping) {
+    if(availability.psychologist_id !== psychologist_id){
       await transaction.rollback();
-      return res.status(400).json({message: 'El psicólogo no esta disponible en esta fecha/hora.'})
-};
+      return res.status(400).json({message: 'La disponibilidad no pertenece al psicologo seleccionado.'})
+    }
+
+    //verificar que la disponibilidad no este ocupada
+    if (availability.status !=='available'){
+      await transaction.rollback();
+      return res.status(400).json({message: 'La disponibilidad seleccionada ya esta ocupada.'})
+    }
 
     //Crear la cita
     const newAppointment = await AppointmentModel.create({
       patient_id,
       psychologist_id,
-      date,
+      date: availability.weekday,
+      start_time: availability.start_time,
+      end_time: availability.end_time,
       status: 'pending',
-      session_link,
-      duration_minutes: duration_minutes || 50,
+      session_link: session_link || null,
+      duration_minutes: duration_minutes || 60,
       notes: notes || '',
     }, { transaction });
 
+    //marcar la disponibilidad como ocupada
+    availability.status = 'booked';
+    await availability.save({ transaction });
+
     await transaction.commit();
-    res.status(201).json(newAppointment);
+    res.status(201).json({message: 'Cita creada correctamente', appointment:newAppointment});
   } catch (error) {
     await transaction.rollback();
     console.error('Error al crear cita:', error);
@@ -156,6 +161,15 @@ export const updateAppointment = async (req, res) => {
     ){
       await transaction.rollback();
       return res.status(403).json({message: 'No tienes permiso para editar esta cita.'})
+    }
+
+    // Si la cita se cancela, liberar disponibilidad
+    if (status && status === 'cancelled' && appointment.availability_id) {
+      const availability = await AvailabilityModel.findByPk(appointment.availability_id, { transaction });
+      if (availability && availability.status === 'booked') {
+        availability.status = 'available';
+        await availability.save({ transaction });
+      }
     }
 
     //solo permitimos actualizar datos seguros
@@ -194,6 +208,15 @@ export const deleteAppointment = async (req, res) => {
     ){
       await transaction.rollback();
       return res.status(403).json({message: 'No tienes permiso para eliminar esta cita.'})
+    }
+
+    //liberar la disponibilidad si existia
+    if (appointment.availability_id) {
+      const availability = await AvailabilityModel.findByPk(appointment.availability_id, { transaction });
+      if (availability) {
+        availability.status = 'available';
+        await availability.save({ transaction });
+      }
     }
 
     await appointment.destroy({ transaction });

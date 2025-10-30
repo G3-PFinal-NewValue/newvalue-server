@@ -25,7 +25,7 @@ const upload = multer({ dest: 'uploads/' }); // carpeta temporal
 patientRouter.get("/", authMiddleware, roleMiddleware("admin"), getAllPatients);
 
 // Cualquier usuario puede registrarse como paciente (con foto opcional)
-patientRouter.post("/", upload.single('photo'), createPatient);
+patientRouter.post("/", authMiddleware, upload.single('photo'), createPatient);
 
 // Admin o el propio usuario pueden ver/editar/desactivar/eliminar su cuenta
 patientRouter.get("/:id", authMiddleware, ownershipMiddleware, getPatientById);
