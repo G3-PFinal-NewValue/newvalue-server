@@ -34,11 +34,11 @@ export async function up(queryInterface, Sequelize) {
     },
 
     // Google login
-    // googleId: {
-    //   type: DataTypes.STRING,
-    //   allowNull: true,
-    //   unique: true,
-    // },
+    google_id: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
     avatar: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -82,7 +82,7 @@ export async function up(queryInterface, Sequelize) {
         'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
       ),
     },
-      deleted_at: {
+    deleted_at: {
       type: DataTypes.DATE,
       allowNull: true,
     },

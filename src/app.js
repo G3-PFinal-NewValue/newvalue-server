@@ -1,5 +1,8 @@
 import express from 'express';
 import corsConfig from './config/cors.config.js';
+import './models/associations.js'
+
+//import rutas
 import authRouter from './routes/auth.routes.js';
 import patientRouter from './routes/patient.routes.js';
 import psychologistRouter from './routes/psychologist.routes.js';
@@ -18,10 +21,10 @@ app.use(express.json());
 app.use(corsConfig);
 
 // Rutas
-app.use('/auth', authRouter); 
+app.use('/auth', authRouter);
 app.use('/patient', patientRouter);
 app.use('/psychologist', psychologistRouter);
-app.use ('/appointment', appointmentRouter)
+app.use('/appointment', appointmentRouter)
 app.use('/availability', availabilityRouter);
 app.use('/session', sessionRouter);
 app.use('/article', articleRouter);
@@ -30,5 +33,12 @@ app.use('/user', userRouter);
 
 // Ruta de prueba
 app.get('/', (req, res) => res.send('API Running...'));
+
+//error handler 
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send({ error: 'Something went wrong!' })
+})
+
 
 export default app;
