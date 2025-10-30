@@ -1,6 +1,7 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
-import PsychologistModel from './PsychologistModel.js';
+import UserModel from './UserModel.js';
+
 
 const ArticleModel = sequelize.define('article', {
   id: {
@@ -13,8 +14,8 @@ const ArticleModel = sequelize.define('article', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: PsychologistModel,
-      key: 'user_id',
+      model: 'user',
+      key: 'id',
     },
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
@@ -23,6 +24,12 @@ const ArticleModel = sequelize.define('article', {
   category_id: {
     type: DataTypes.INTEGER,
     allowNull: true,
+    references: {
+      model: 'category',
+      key: 'id',
+    },
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE',
   },
 
   title: {
@@ -33,12 +40,6 @@ const ArticleModel = sequelize.define('article', {
   content: {
     type: DataTypes.TEXT,
     allowNull: false,
-  },
-
-  published: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false,
   },
 
   published_at: {

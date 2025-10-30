@@ -34,7 +34,7 @@ export async function up(queryInterface, Sequelize) {
     },
 
     // Google login
-    googleId: {
+    google_id: {
       type: DataTypes.STRING,
       allowNull: true,
       unique: true,
