@@ -1,18 +1,37 @@
 import PsychologistModel from "../models/PsychologistModel.js";
 import cloudinary from '../utils/cloudinaryConfig.js';
+import SpecialityModel from "../models/SpecialityModel.js";
 import fs from 'fs';
+import {sequelize} from "../config/database.js";
+
 
 // Obtener todos los psicólogos (activos y validados)
 export const getAllPsychologists = async (req, res) => {
   try {
-    const { includeInactive } = req.query;
+    const { includeInactive, specialities } = req.query;
 
     const whereClause = includeInactive
       ? {}
       : { status: 'active', validated: true };
 
+    const include = [
+      {
+        model: SpecialityModel,
+        as: 'specialities',
+        attributes: ['id', 'name'],
+        through: { attributes: [] }
+      }
+    ];
+
+    // Si hay filtro por especialidades
+    if (specialities) {
+      const specialityIds = specialities.split(',').map(id => parseInt(id));
+      include[0].where = { id: specialityIds };
+    }
+
     const psychologists = await PsychologistModel.findAll({
-      where: whereClause
+      where: whereClause,
+      include
     });
 
     res.status(200).json(psychologists);
@@ -26,8 +45,23 @@ export const getAllPsychologists = async (req, res) => {
 // GET por user_id
 export const getPsychologistById = async (req, res) => {
   try {
-    const profile = await PsychologistModel.findOne({ where: { user_id: req.params.id } });
-    if (!profile) return res.status(404).json({ message: 'Psicólogo/a no encontrado/a' });
+    const profile = await PsychologistModel.findOne({ 
+      where: { user_id: req.params.id },
+      include: [
+        {
+          model: SpecialityModel,
+          as: 'specialities',
+          attributes: ['id','name'],
+          through: {
+            attributes: [],
+          },
+        },
+      ],
+});
+
+    if (!profile) {
+      return res.status(404).json({ message: 'Psicólogo/a no encontrado/a' });
+    }
     res.status(200).json(profile);
   } catch (error) {
     console.error('Error al obtener el psicólogo/a:', error);
@@ -37,17 +71,27 @@ export const getPsychologistById = async (req, res) => {
 
 // POST: crear perfil de psicólogo con foto opcional
 export const createPsychologistProfile = async (req, res) => {
+const t = await sequelize.transaction();
+
   try {
     const user_id = req.user.id;
-    const { license_number, speciality, professional_description } = req.body;
+    const { license_number, specialities, professional_description } = req.body;
 
-    if (!license_number) return res.status(400).json({ message: "El número de colegiado es obligatorio" });
+    //Validación Basica
+    if (!license_number){
+      return res.status(400).json({ message: "El número de colegiado es obligatorio" });
+    }
 
+    //Verificar si ya existe un perfil para este usuario
     const existingProfile = await PsychologistModel.findOne({ where: { user_id } });
-    if (existingProfile) return res.status(400).json({ message: "Ya existe un perfil para este usuario" });
+    if (existingProfile){
+      return res.status(400).json({ message: "Ya existe un perfil para este usuario" });
+    }
 
+    //Subida opcional de foto a Cloudinary
     let imageUrl = null;
     let publicId = null;
+
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, { folder: 'psychologists' });
       imageUrl = result.secure_url;
@@ -55,17 +99,50 @@ export const createPsychologistProfile = async (req, res) => {
       fs.unlinkSync(req.file.path); // eliminar archivo temporal
     }
 
+    // Crear perfil
     const newProfile = await PsychologistModel.create({
       user_id,
       license_number,
-      speciality,
       professional_description,
       photo: imageUrl,
       photo_public_id: publicId,
       status: 'active',     
       validated: false        
     });
-    res.status(201).json({ message: 'Perfil de psicólogo/a creado correctamente', profile: newProfile });
+
+    //si envia especialidades ( pueden ser nombres o ids)
+    if (specialities){
+      const specialityArray =  Array.isArray(specialities) 
+      ? specialities
+      : JSON.parse(specialities);
+
+      const specialityInstances = await Promise.all(
+        specialityArray.map(async (item) => {
+          if(!item) return null;
+          if (!isNaN(item)) {
+            return SpecialityModel.findByPk(item);
+          } else {
+            const [speciality] = await SpecialityModel.findOrCreate({
+              where: { name: item.trim() },
+            });
+            return speciality;
+          }
+        })
+      );
+
+      //asociar las especialidades al psicologo
+      await newProfile.setSpecialities(specialityInstances.filter(Boolean));
+      }
+    
+      // Incluir especialidades en la respuesta
+    const createdProfile = await PsychologistModel.findByPk(newProfile.user_id, {
+      include: { model: SpecialityModel, as: 'specialities', attributes: ['id', 'name'], through: { attributes: [] } },
+    });
+
+    res.status(201).json({ 
+      message: 'Perfil de psicólogo/a creado correctamente', 
+      profile: newProfile 
+    });
   } catch (error) {
     console.error('Error al crear el perfil:', error);
     res.status(400).json({ message: error.message });
@@ -75,8 +152,13 @@ export const createPsychologistProfile = async (req, res) => {
 // PUT: actualizar perfil de psicólogo con posible nueva foto
 export const updatePsychologistProfile = async (req, res) => {
   try {
-    const profile = await PsychologistModel.findOne({ where: { user_id: req.params.id } });
-    if (!profile) return res.status(404).json({ message: 'Psicólogo/a no encontrado' });
+    const { id } = req.params;
+    const { license_number, specialities, professional_description, status, validated } = req.body;
+
+    const profile = await PsychologistModel.findOne({ where: { user_id: id } });
+    if (!profile) {
+      return res.status(404).json({ message: 'Psicólogo/a no encontrado' });
+    }
 
     // Subir nueva foto si existe
     if (req.file) {
@@ -89,17 +171,50 @@ export const updatePsychologistProfile = async (req, res) => {
       fs.unlinkSync(req.file.path);
     }
 
-    // Actualizar otros campos permitidos
-    const fieldsToUpdate = ['license_number', 'speciality', 'professional_description', 'status', 'validated'];
-    fieldsToUpdate.forEach(field => {
-      if (req.body[field] !== undefined) profile[field] = req.body[field];
-    });
+    // Actualizar campos básicos 
+    if (license_number) profile.license_number = license_number;
+    if (professional_description) profile.professional_description = professional_description;
+    if (status) profile.status = status;
+    if (validated !== undefined) profile.validated = validated;
+
+    // Actualizar especialidades
+    if (specialities) {
+      const specialityArray = Array.isArray(specialities)
+        ? specialities
+        : JSON.parse(specialities);
+
+      const specialityInstances = await Promise.all(
+        specialityArray.map(async (item) => {
+          if (!item) return null;
+          if (!isNaN(item)) {
+            return SpecialityModel.findByPk(item);
+          } else {
+            const [speciality] = await SpecialityModel.findOrCreate({
+              where: { name: item.trim() },
+            });
+            return speciality;
+          }
+        })
+      );
+
+
+      // Reemplazar las especialidades anteriores por las nuevas
+      await profile.setSpecialities(specialityInstances.filter(Boolean));
+    }
 
     await profile.save();
-    res.status(200).json({ message: 'Perfil actualizado correctamente', profile });
+
+    const updatedProfile = await PsychologistModel.findByPk(id, {
+      include: { model: SpecialityModel, as: 'specialities', attributes: ['id', 'name'], through: { attributes: [] } },
+    });
+
+    res.status(200).json({
+      message: "Perfil de psicólogo/a actualizado correctamente",
+      profile: updatedProfile,
+    });
   } catch (error) {
-    console.error('Error al actualizar perfil:', error);
-    res.status(400).json({ message: error.message });
+    console.error("Error al actualizar perfil:", error);
+    res.status(400).json({ message: "Error al actualizar el perfil", error: error.message });
   }
 };
 

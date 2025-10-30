@@ -15,8 +15,8 @@ const PsychologistSpeciality = sequelize.define(
 );
 
 // Relación muchos a muchos Psychologist <-> Speciality
-PsychologistModel.belongsToMany(SpecialityModel, { through: PsychologistSpeciality, foreignKey: "psychologist_id" });
-SpecialityModel.belongsToMany(PsychologistModel, { through: PsychologistSpeciality, foreignKey: "speciality_id" });
+PsychologistModel.belongsToMany(SpecialityModel, { through: PsychologistSpeciality, as: "specialities", foreignKey: "psychologist_id" });
+SpecialityModel.belongsToMany(PsychologistModel, { through: PsychologistSpeciality, as: "psychologists", foreignKey: "speciality_id" });
 
 // Relación Category <-> Article (una categoría tiene muchos artículos)
 CategoryArticleModel.hasMany(ArticleModel, {
@@ -32,17 +32,19 @@ ArticleModel.belongsTo(CategoryArticleModel, {
   as: "category",
 });
 
-// Relación Psychologist <-> Article (un psicólogo escribe muchos artículos)
-PsychologistModel.hasMany(ArticleModel, {
+// Relación User <-> Article 
+UserModel.hasMany(ArticleModel, {
   foreignKey: "author_id",
+  as: "articles",
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
 
-// Un artículo pertenece a un psicólogo (autor)
-ArticleModel.belongsTo(PsychologistModel, {
+// Un artículo pertenece al admin
+ArticleModel.belongsTo(UserModel, {
   foreignKey: "author_id",
   as: "author",
 });
+
 
 export { UserModel, RoleModel, PsychologistSpeciality, PsychologistModel, SpecialityModel, ArticleModel, CategoryArticleModel };
