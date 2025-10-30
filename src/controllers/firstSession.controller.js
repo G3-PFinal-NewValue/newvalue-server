@@ -1,4 +1,3 @@
-// src/controllers/firstSession.controller.js
 import UserModel from "../models/UserModel.js";
 import bcrypt from "bcrypt";
 import transporter from "../config/nodemailer.js";
@@ -29,23 +28,39 @@ export const createUserAndSendEmail = async (req, res) => {
 
     const newUser = await UserModel.create({
       email,
-      password_hash: hashedPassword,
+      password_hash: await bcrypt.hash(password, 10),
       first_name: firstName,
       last_name: `${firstLastName} ${secondLastName}`,
       phone,
-      role_id: 3, // paciente
+      postal_code: postalCode,
+      province,
+      full_address: address,
+      city,
+      country,
+      dni_nie_cif: dni,
+      role_id: 3,
     });
 
     // Enviar correo
     await transporter.sendMail({
       from: `"Cora Mind" <${process.env.SMTP_USER}>`,
       to: email,
-      subject: "Registro completado",
+      subject: "Registro completado - Cora Mind",
       html: `
-        <p>Hola ${firstName},</p>
-        <p>Tu usuario ha sido creado correctamente. Puedes iniciar sesión con tu email.</p>
-        <p>Gracias por registrarte en Cora Mind.</p>
-      `,
+    <h3>Hola ${firstName},</h3>
+    <p>Tu usuario ha sido creado correctamente. Puedes iniciar sesión con tu email para completar tu perfil.</p>
+    <p>Nos pondremos en contacto contigo brevemente para agendar una primera consulta gratuita.</p>
+    <p>Gracias por registrarte en Cora Mind.</p>
+
+    <p>Información sobre tu situación actual:</p>
+    <ul>
+      <li><strong>Razón de acudir a terapia:</strong> ${reason}</li>
+      <li><strong>Cómo te sientes:</strong> ${feeling}</li>
+      <li><strong>Tiempo con esta sensación:</strong> ${timeFeeling}</li>
+      <li><strong>Terapias anteriores:</strong> ${previousTherapy}</li>
+      <li><strong>Disponibilidad:</strong> ${availability}</li>
+    </ul>
+  `,
     });
 
     res.status(201).json({ message: "Usuario creado y email enviado", user: newUser });

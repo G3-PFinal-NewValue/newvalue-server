@@ -34,35 +34,79 @@ export const getUserById = async (req, res) => {
 };
 
 export const createUser = async (req, res) => {
-    try {
-        const { email, name, roleName } = req.body;
+  try {
+    const {
+      email,
+      first_name,
+      last_name,
+      phone,
+      postal_code,
+      province,
+      full_address,
+      city,
+      country,
+      dni_nie_cif,
+      roleName
+    } = req.body;
 
-        // Crear usuario
-        const newUser = await UserModel.create({ email, name });
-
-        // Asignar rol por defecto o especificado
-        const role = await RoleModel.findOne({ where: { name: roleName || "patient" } });
-        await newUser.addRole(role);
-
-        res.status(201).json({ user: newUser, role: role.name });
-    } catch (error) {
-        console.error("Error al crear usuario:", error);
-        res.status(400).json({ message: error.message });
+    // Validación de campos obligatorios
+    if (!email || !first_name || !last_name || !phone || !postal_code || !province || !full_address || !city || !country || !dni_nie_cif) {
+      return res.status(400).json({ message: "Todos los campos obligatorios deben estar completos" });
     }
+
+    const newUser = await UserModel.create({
+      email,
+      first_name,
+      last_name,
+      phone,
+      postal_code,
+      province,
+      full_address,
+      city,
+      country,
+      dni_nie_cif,
+      role_id: 3 // paciente por defecto
+    });
+
+    // Asignar rol
+    const role = await RoleModel.findOne({ where: { name: roleName || "patient" } });
+    newUser.role_id = role.id;
+    await newUser.save();
+
+    res.status(201).json({ user: newUser, role: role.name });
+  } catch (error) {
+    console.error("Error al crear usuario:", error);
+    res.status(400).json({ message: error.message });
+  }
 };
 
 export const updateUser = async (req, res) => {
-    try {
-        const { name, email } = req.body;
-        const updated = await UserModel.update({ name, email }, {
-            where: { id: req.params.id },
-            returning: true,
-        });
-        res.status(200).json({ message: "Usuario actualizado", user: updated[1][0] });
-    } catch (error) {
-        console.error("Error al actualizar usuario:", error);
-        res.status(400).json({ message: error.message });
-    }
+  try {
+    const {
+      first_name,
+      last_name,
+      phone,
+      postal_code,
+      province,
+      full_address,
+      city,
+      country,
+      dni_nie_cif,
+      email
+    } = req.body;
+
+    const [rows, [updatedUser]] = await UserModel.update(
+      { first_name, last_name, phone, postal_code, province, full_address, city, country, dni_nie_cif, email },
+      { where: { id: req.params.id }, returning: true }
+    );
+
+    if (!rows) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    res.status(200).json({ message: "Usuario actualizado", user: updatedUser });
+  } catch (error) {
+    console.error("Error al actualizar usuario:", error);
+    res.status(400).json({ message: error.message });
+  }
 };
 
 export const deactivateUser = async (req, res) => {
@@ -170,7 +214,7 @@ export const assignRole = async (req, res) => {
 
         console.log('12. Enviando respuesta completa:', response);
         res.status(200).json(response);
-        
+
     } catch (error) {
         console.error("❌ Error al asignar rol:", error);
         res.status(500).json({ message: error.message });
