@@ -19,18 +19,42 @@ export async function up(queryInterface, Sequelize) {
       allowNull: true, // null si el usuario usa login con Google
     },
 
-    // Campos personales
+    // Campos personales obligatorios para facturación y legal
     first_name: {
       type: DataTypes.STRING(100),
       allowNull: false,
     },
     last_name: {
       type: DataTypes.STRING(100),
-      allowNull: true,
+      allowNull: false,
     },
     phone: {
       type: DataTypes.STRING(20),
-      allowNull: true,
+      allowNull: false,
+    },
+    postal_code: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+    },
+    province: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    },
+    full_address: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    city: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    },
+    country: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    },
+    dni_nie_cif: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
     },
 
     // Google login
