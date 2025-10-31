@@ -1,6 +1,5 @@
 import ArticleModel from '../models/ArticleModel.js';
-import PsychologistModel from '../models/PsychologistModel.js';
-import { CategoryArticleModel } from '../models/associations.js';
+import { CategoryArticleModel, UserModel, RoleModel } from '../models/associations.js';
 
 export const getAllArticles = async (req, res) => {
   try {
@@ -10,11 +9,15 @@ export const getAllArticles = async (req, res) => {
       whereCondition['$category.name$'] = category;
     }
     const articles = await ArticleModel.findAll({
+      where: whereCondition,
       include: [
-          { model: PsychologistModel,
+        {
+          model: UserModel,
           as: 'author',
-          attributes: ['user_id', 'name', 'email']},
-           { model: CategoryArticleModel, as: 'category', attributes: ['id', 'name'] }
+          attributes: ['id', 'first_name', 'last_name', 'email', 'role_id'],
+
+        },
+        { model: CategoryArticleModel, as: 'category', attributes: ['id', 'name'] }
       ],
       order: [['created_at', 'DESC']],
     });
@@ -28,12 +31,13 @@ export const getAllArticles = async (req, res) => {
 export const getArticleById = async (req, res) => {
   try {
     const { id } = req.params;
+
     const article = await ArticleModel.findByPk(id, {
       include: [
         {
-          model: PsychologistModel,
+          model: UserModel,
           as: 'author',
-          attributes: ['user_id', 'name', 'email'],
+          attributes: ['id', 'first_name', 'last_name', 'email', 'role_id'],
         },
         {
           model: CategoryArticleModel,
@@ -43,11 +47,11 @@ export const getArticleById = async (req, res) => {
       ],
     });
     if (!article) {
-      return res.status(404).json({ message: 'Article not found' });
+      return res.status(404).json({ message: 'Artículo no encontrado' });
     }
     res.status(200).json(article);
   } catch (error) {
-    console.error('Error fetching article:', error);
+    console.error('Error al buscar artículo:', error);
     res.status(500).json({ message: 'Error retrieving article', error });
   }
 };
@@ -55,11 +59,12 @@ export const getArticleById = async (req, res) => {
 export const createArticle = async (req, res) => {
   try {
     // Validar rol
-    if (!req.user || !req.user.isPsychologist) {
-      return res.status(403).json({ message: 'Only psychologists can create articles.' });
+    const VerifyRole = req.user.role
+    if (!req.user.id || VerifyRole !== 'admin') {
+      return res.status(403).json({ message: 'Solo admin puede crear un artículo' });
     }
 
-     if (req.body.category_id) {
+    if (req.body.category_id) {
       const categoryExists = await CategoryArticleModel.findByPk(req.body.category_id);
       if (!categoryExists) {
         return res.status(400).json({ message: 'Invalid category ID' });
@@ -68,19 +73,23 @@ export const createArticle = async (req, res) => {
 
     const newArticle = await ArticleModel.create({
       ...req.body,
-      author_id: req.user.user_id,
+      author_id: req.user.id,
       published_at: req.body.published ? new Date() : null,
     });
 
     res.status(201).json(newArticle);
   } catch (error) {
-    console.error('Error creating article:', error);
-    res.status(400).json({ message: 'Error creating article', error });
+    console.error('Error a crear artículo:', error);
+    res.status(400).json({ message: 'Error a crear artículo', error });
   }
 };
 
 export const updateArticle = async (req, res) => {
   try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Solo admin puede actualizar artículos.' });
+    }
+
     const { id } = req.params;
 
     const [updated] = await ArticleModel.update(
@@ -92,28 +101,32 @@ export const updateArticle = async (req, res) => {
     );
 
     if (!updated) {
-      return res.status(404).json({ message: 'Article not found' });
+      return res.status(404).json({ message: 'Artículo no encontrado' });
     }
 
-    res.status(200).json({ message: 'Article updated successfully' });
+    res.status(200).json({ message: 'Artículo actualizado correctamente' });
   } catch (error) {
-    console.error('Error updating article:', error);
-    res.status(400).json({ message: 'Error updating article', error });
+    console.error('Error al actualizar artículo:', error);
+    res.status(400).json({ message: 'Error al actualizar artículo', error });
   }
 };
 
 export const deleteArticle = async (req, res) => {
-  try {
+ try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Solo admin puede eliminar el artículo.' });
+    }
+
     const { id } = req.params;
     const deleted = await ArticleModel.destroy({ where: { id } });
 
     if (!deleted) {
-      return res.status(404).json({ message: 'Article not found' });
+      return res.status(404).json({ message: 'Artículo no encontrado' });
     }
 
-    res.status(200).json({ message: 'Article deleted successfully' });
+    res.status(200).json({ message: 'Artículo eliminado correctamente' });
   } catch (error) {
-    console.error('Error deleting article:', error);
-    res.status(500).json({ message: 'Error deleting article', error });
+    console.error('Error al eliminar artículo:', error);
+    res.status(500).json({ message: 'Error al eliminar artículo', error });
   }
 };

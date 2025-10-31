@@ -22,10 +22,21 @@ export async function up(queryInterface, Sequelize) {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "psychologist", 
-        key: "user_id",        
+        model: "user",
+        key: "id",
       },
       onDelete: "CASCADE",
+      onUpdate: "CASCADE",
+    },
+
+    category_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "category",
+        key: "id",
+      },
+      onDelete: "SET NULL",
       onUpdate: "CASCADE",
     },
 

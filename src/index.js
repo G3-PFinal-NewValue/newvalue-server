@@ -14,6 +14,7 @@ import userRouter from './routes/user.routes.js';
 import './models/associations.js';
 import specialityRouter from './routes/speciality.routes.js';
 
+
 const app = express();
 
 // Middlewares
