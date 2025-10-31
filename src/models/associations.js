@@ -8,6 +8,7 @@ import CategoryArticleModel from "./CategoryArticleModel.js"
 import AppointmentModel from "./AppointmentModel.js";
 import AvailabilityModel from "./AvailabilityModel.js";
 import SessionModel from "./SessionModel.js";
+import PatientModel from "./PatientModel.js";
 
 // Tabla intermedia para Psychologist <-> Speciality
 const PsychologistSpeciality = sequelize.define(
@@ -19,6 +20,36 @@ const PsychologistSpeciality = sequelize.define(
 // Relación muchos a muchos Psychologist <-> Speciality
 PsychologistModel.belongsToMany(SpecialityModel, { through: PsychologistSpeciality, as: "specialities", foreignKey: "psychologist_id" });
 SpecialityModel.belongsToMany(PsychologistModel, { through: PsychologistSpeciality, as: "psychologists", foreignKey: "speciality_id" });
+
+// ------------------------------------
+// RELACIÓN USER <-> PATIENT
+// ------------------------------------
+UserModel.hasOne(PatientModel, {
+  foreignKey: "user_id",
+  as: "patient",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+PatientModel.belongsTo(UserModel, {
+  foreignKey: "user_id",
+  as: "user",
+});
+
+// ------------------------------------
+// RELACIÓN USER <-> PSYCHOLOGIST
+// ------------------------------------
+UserModel.hasOne(PsychologistModel, {
+  foreignKey: "user_id",
+  as: "psychologist",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+PsychologistModel.belongsTo(UserModel, {
+  foreignKey: "user_id",
+  as: "user",
+});
 
 // Relación Category <-> Article (una categoría tiene muchos artículos)
 CategoryArticleModel.hasMany(ArticleModel, {
@@ -102,4 +133,4 @@ AppointmentModel.belongsTo(UserModel, {
 });
 
 
-export { UserModel, RoleModel, PsychologistSpeciality, PsychologistModel, SpecialityModel, ArticleModel, CategoryArticleModel, AvailabilityModel, AppointmentModel, SessionModel};
+export { UserModel, RoleModel, PatientModel, PsychologistSpeciality, PsychologistModel, SpecialityModel, ArticleModel, CategoryArticleModel, AvailabilityModel, AppointmentModel, SessionModel};

@@ -1,12 +1,21 @@
 import PatientModel from "../models/PatientModel.js";
+import UserModel from "../models/UserModel.js";
+import RoleModel from "../models/RoleModel.js";
 
-// Obtener todos los pacientes activos (por defecto)
+// Obtener todos los pacientes (admin)
 export const getAllPatients = async (req, res) => {
     try {
         const { includeInactive } = req.query; // ?includeInactive=true
         const whereClause = includeInactive ? {} : { status: 'active' };
 
-        const patients = await PatientModel.findAll({ where: whereClause });
+        const patients = await PatientModel.findAll({
+            where: whereClause,
+            include: {
+                model: UserModel,
+                as: 'user',
+                include: { model: RoleModel, as: 'role' },
+            },
+        });
         res.status(200).json(patients);
     } catch (error) {
         console.error('Error al obtener los pacientes:', error);
@@ -14,10 +23,13 @@ export const getAllPatients = async (req, res) => {
     }
 };
 
-// Obtener paciente por ID
+// Obtener paciente por ID (solo admin)
 export const getPatientById = async (req, res) => {
     try {
-        const patient = await PatientModel.findByPk(req.params.id);
+        const patient = await PatientModel.findByPk(req.params.id, {
+            include: { model: UserModel, as: 'user' },
+        });
+
         if (!patient) return res.status(404).json({ message: 'Paciente no encontrado' });
         res.status(200).json(patient);
     } catch (error) {
@@ -29,7 +41,7 @@ export const getPatientById = async (req, res) => {
 // Crear nuevo paciente
 export const createPatient = async (req, res) => {
     try {
-        const user_id = req.user.id; 
+        const user_id = req.user.id;
 
         //validar si el paciente ya existe
         const existingPatient = await PatientModel.findOne({ where: { user_id } });
@@ -59,15 +71,13 @@ export const createPatient = async (req, res) => {
 // Actualizar paciente
 export const updatePatient = async (req, res) => {
     try {
-        const user_id = req.user.id;
-
         const [rowsUpdated] = await PatientModel.update(req.body, {
-            where: { user_id },
+            where: { user_id: req.params.id},
         });
 
-        if (rowsUpdated === 0){
+        if (rowsUpdated === 0) {
             return res.status(404).json({ message: 'Paciente no encontrado' });
-        } 
+        }
 
         const updatedPatient = await PatientModel.findOne({ where: { user_id } });
         res.status(200).json({ message: 'Paciente actualizado', patient: updatedPatient });
@@ -77,7 +87,7 @@ export const updatePatient = async (req, res) => {
     }
 };
 
-// "Eliminar" paciente (desactivar cuenta)
+// desactivar cuenta 
 export const deactivatePatient = async (req, res) => {
     try {
         const [rowsUpdated] = await PatientModel.update(
@@ -114,16 +124,54 @@ export const activatePatient = async (req, res) => {
 // Eliminar paciente permanentemente (solo si realmente lo necesitas)
 export const deletePatient = async (req, res) => {
     try {
-        const rowsDeleted = await PatientModel.destroy({
+        const deleted = await PatientModel.destroy({
             where: { user_id: req.params.id },
-            force: false, // si usas paranoid:true, false = soft delete
+            force: false, 
         });
 
-        if (rowsDeleted === 0) return res.status(404).json({ message: 'Paciente no encontrado' });
+        if (deleted === 0) return res.status(404).json({ message: 'Paciente no encontrado' });
 
         res.status(200).json({ message: 'Paciente eliminado (soft delete)' });
     } catch (error) {
         console.error('Error al eliminar el paciente:', error);
+        res.status(400).json({ message: error.message });
+    }
+};
+
+//PARA EL PACIENTE
+// 👤 Obtener el perfil del paciente autenticado
+export const getMyProfile = async (req, res) => {
+    try {
+        const patient = await PatientModel.findOne({
+            where: { user_id: req.user.id },
+            include: { model: UserModel, as: "user" },
+        });
+
+        if (!patient) return res.status(404).json({ message: "Perfil no encontrado" });
+
+        res.status(200).json(patient);
+    } catch (error) {
+        console.error("Error al obtener el perfil del paciente:", error);
+        res.status(400).json({ message: error.message });
+    }
+};
+
+// ✏️ Actualizar el perfil del paciente autenticado
+export const updateMyProfile = async (req, res) => {
+    try {
+        const { birth_date, gender, therapy_goals, medical_history, photo } = req.body;
+
+        const [updated] = await PatientModel.update(
+            { birth_date, gender, therapy_goals, medical_history, photo },
+            { where: { user_id: req.user.id } }
+        );
+
+        if (!updated) return res.status(404).json({ message: "Perfil no encontrado" });
+
+        const updatedProfile = await PatientModel.findOne({ where: { user_id: req.user.id } });
+        res.status(200).json({ message: "Perfil actualizado correctamente", patient: updatedProfile });
+    } catch (error) {
+        console.error("Error al actualizar perfil:", error);
         res.status(400).json({ message: error.message });
     }
 };

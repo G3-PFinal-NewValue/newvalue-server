@@ -2,7 +2,7 @@ import express from 'express';
 import corsConfig from './config/cors.config.js';
 import './models/associations.js'
 
-//import rutas
+//rutas
 import authRouter from './routes/auth.routes.js';
 import patientRouter from './routes/patient.routes.js';
 import psychologistRouter from './routes/psychologist.routes.js';
@@ -10,7 +10,6 @@ import appointmentRouter from './routes/appointment.routes.js';
 import availabilityRouter from './routes/availability.routes.js';
 import sessionRouter from './routes/session.routes.js';
 import articleRouter from './routes/article.routes.js';
-import categoryRouter from './routes/category.routes.js';
 import userRouter from './routes/user.routes.js';
 
 
