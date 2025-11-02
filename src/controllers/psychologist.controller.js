@@ -158,8 +158,7 @@ export const createPsychologistProfile = async (req, res) => {
       );
 
       //asociar las especialidades al psicologo
-      await newProfile.setSpecialities(specialityInstances.filter(Boolean));
-    }
+await newProfile.setSpecialities(specialityInstances.filter(Boolean), { transaction: t });    }
 
     // CA: lógica de las disponibilidades
     if (availabilities) {
@@ -204,6 +203,7 @@ export const createPsychologistProfile = async (req, res) => {
 
 // PUT: actualizar perfil de psicólogo con posible nueva foto
 export const updatePsychologistProfile = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const { id } = req.params;
     const {
