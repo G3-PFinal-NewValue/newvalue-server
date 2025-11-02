@@ -30,8 +30,9 @@ export const getAllAppointments = async (req, res) => {
     const {rows: appointments, count} = await AppointmentModel.findAndCountAll({
       where: whereClause,
       include: [
-        { model: UserModel, as: 'patient', attributes: ['id', 'name', 'email'] },
-        { model: UserModel, as: 'psychologist', attributes: ['id', 'name', 'email'] },
+        // CA: antes tenía name y en el modelo es last_name
+        { model: UserModel, as: 'patient', attributes: ['id', 'first_name', 'last_name', 'email'] },
+        { model: UserModel, as: 'psychologist', attributes: ['id', 'first_name', 'last_name', 'email'] },
         { model: SessionModel, as: 'sessions' },
       ],
       order: [['date', 'ASC']],

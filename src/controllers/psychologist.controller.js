@@ -22,6 +22,11 @@ export const getAllPsychologists = async (req, res) => {
         attributes: ["id", "name"],
         through: { attributes: [] },
       },
+      {
+        model: UserModel,
+        as: 'user', // Usamos el alias de la asociación
+        attributes: ['first_name', 'last_name', 'avatar'] // Traemos solo lo necesario
+      }
     ];
 
     // Si hay filtro por especialidades

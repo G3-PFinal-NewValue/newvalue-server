@@ -23,10 +23,10 @@ const upload = multer({ dest: 'uploads/' }); // carpeta temporal
 psychologistRouter.post('/', authMiddleware, roleMiddleware('psychologist'), upload.single('photo'), createPsychologistProfile);
 
 // Obtener todos los psicólogos
-psychologistRouter.get('/', authMiddleware, roleMiddleware('admin'), getAllPsychologists);
+psychologistRouter.get('/', authMiddleware, getAllPsychologists);
 
 // Obtener psicólogo por user_id
-psychologistRouter.get('/:id', authMiddleware, getPsychologistById);
+psychologistRouter.get('/:id', getPsychologistById);
 
 // Actualizar perfil de psicólogo con posible nueva foto
 psychologistRouter.put('/:id', authMiddleware, ownershipMiddleware, upload.single('photo'), updatePsychologistProfile);

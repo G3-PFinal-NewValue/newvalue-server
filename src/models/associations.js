@@ -6,6 +6,8 @@ import SpecialityModel from "./SpecialityModel.js";
 import ArticleModel from "./ArticleModel.js"
 import CategoryArticleModel from "./CategoryArticleModel.js"
 import AvailabilityModel from "./AvailabilityModel.js";
+import AppointmentModel from "./AppointmentModel.js";
+import SessionModel from "./SessionModel.js";
 
 // Tabla intermedia para Psychologist <-> Speciality
 const PsychologistSpeciality = sequelize.define(
@@ -30,6 +32,35 @@ PsychologistModel.belongsTo(UserModel, { foreignKey: 'user_id', as: 'user' });
 PsychologistModel.hasMany(AvailabilityModel, { foreignKey: 'psychologist_id', as: 'availabilities' });
 // Una disponibilidad pertenece a un psicólogo
 AvailabilityModel.belongsTo(PsychologistModel, { foreignKey: 'psychologist_id', as: 'psychologist' });
+
+AppointmentModel.hasMany(SessionModel, { 
+  foreignKey: 'appointment_id', 
+  as: 'sessions' // <-- Este 'as' debe coincidir con el del controlador
+});
+
+
+// Un usuario (paciente) puede tener muchas citas
+UserModel.hasMany(AppointmentModel, { 
+  foreignKey: 'patient_id', 
+  as: 'patient_appointments' 
+});
+// Un usuario (psicólogo) puede tener muchas citas
+UserModel.hasMany(AppointmentModel, { 
+  foreignKey: 'psychologist_id', 
+  as: 'psychologist_appointments' 
+});
+
+// Una cita pertenece a un paciente (Usuario)
+AppointmentModel.belongsTo(UserModel, { 
+  foreignKey: 'patient_id', 
+  as: 'patient' 
+});
+// Una cita pertenece a un psicólogo (Usuario)
+AppointmentModel.belongsTo(UserModel, { 
+  foreignKey: 'psychologist_id', 
+  as: 'psychologist' 
+});
+
 
 // Relación Category <-> Article (una categoría tiene muchos artículos)
 CategoryArticleModel.hasMany(ArticleModel, {
@@ -60,4 +91,4 @@ ArticleModel.belongsTo(UserModel, {
 });
 
 
-export { UserModel, RoleModel, PsychologistSpeciality, PsychologistModel, SpecialityModel, ArticleModel, CategoryArticleModel, AvailabilityModel };
+export { UserModel, RoleModel, PsychologistSpeciality, PsychologistModel, SpecialityModel, ArticleModel, CategoryArticleModel, AvailabilityModel, AppointmentModel, SessionModel };
