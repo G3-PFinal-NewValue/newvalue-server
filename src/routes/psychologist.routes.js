@@ -7,7 +7,8 @@ import {
   deactivatePsychologist,
   activatePsychologist,
   validatePsychologist,
-  deletePsychologist
+  deletePsychologist,
+  getPsychologistBookedSlots
 } from "../controllers/psychologist.controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import ownershipMiddleware from "../middleware/ownerMiddleware.js";
@@ -42,5 +43,9 @@ psychologistRouter.patch('/:id/validate', authMiddleware, roleMiddleware('admin'
 
 // Eliminar psicólogo 
 psychologistRouter.delete('/:id', authMiddleware, ownershipMiddleware, deletePsychologist);
+
+//CA: RUTA PARA AGENDA DE PSICÓLOGOS
+
+psychologistRouter.get('/:id/booked', getPsychologistBookedSlots);
 
 export default psychologistRouter;

@@ -5,6 +5,8 @@ import fs from "fs";
 import { sequelize } from "../config/database.js";
 import UserModel from "../models/UserModel.js";
 import AvailabilityModel from "../models/AvailabilityModel.js";
+import AppointmentModel from "../models/AppointmentModel.js";
+import { Op } from "sequelize";
 
 // Obtener todos los psicólogos (activos y validados)
 export const getAllPsychologists = async (req, res) => {
@@ -91,7 +93,8 @@ export const createPsychologistProfile = async (req, res) => {
 
   try {
     const user_id = req.user.id;
-    const { license_number, specialities, professional_description } = req.body;
+    //CA: Agregué availabilities
+    const { license_number, specialities, professional_description, availabilities } = req.body;
 
     //Validación Basica
     if (!license_number) {
@@ -132,7 +135,7 @@ export const createPsychologistProfile = async (req, res) => {
       photo_public_id: publicId,
       status: "active",
       validated: false,
-    });
+    }, { transaction: t });
 
     //si envia especialidades ( pueden ser nombres o ids)
     if (specialities) {
@@ -158,22 +161,40 @@ export const createPsychologistProfile = async (req, res) => {
       await newProfile.setSpecialities(specialityInstances.filter(Boolean));
     }
 
+    // CA: lógica de las disponibilidades
+    if (availabilities) {
+      const availabilityArray = JSON.parse(availabilities);
+      if (Array.isArray(availabilityArray) && availabilityArray.length > 0) {
+        
+        const availData = availabilityArray.map(a => ({
+          psychologist_id: user_id,
+          weekday: a.weekday,
+          start_time: a.start_time,
+          end_time: a.end_time
+        }));
+        await AvailabilityModel.bulkCreate(availData, { transaction: t });
+      }
+    }
+    await t.commit();
+
     // Incluir especialidades en la respuesta
     const createdProfile = await PsychologistModel.findByPk(
       newProfile.user_id,
       {
-        include: {
+        include: [{
           model: SpecialityModel,
           as: "specialities",
           attributes: ["id", "name"],
           through: { attributes: [] },
         },
+        { model: AvailabilityModel, as: 'availabilities', attributes: ['weekday', 'start_time', 'end_time'] }
+      ]
       }
     );
 
     res.status(201).json({
       message: "Perfil de psicólogo/a creado correctamente",
-      profile: newProfile,
+      profile: createdProfile,
     });
   } catch (error) {
     console.error("Error al crear el perfil:", error);
@@ -191,6 +212,7 @@ export const updatePsychologistProfile = async (req, res) => {
       professional_description,
       status,
       validated,
+      availabilities
     } = req.body;
 
     const profile = await PsychologistModel.findOne({ where: { user_id: id } });
@@ -242,7 +264,30 @@ export const updatePsychologistProfile = async (req, res) => {
       await profile.setSpecialities(specialityInstances.filter(Boolean));
     }
 
-    await profile.save();
+    if (availabilities) {
+      // 4a. Borrar todas las disponibilidades anteriores
+      await AvailabilityModel.destroy({
+        where: { psychologist_id: id },
+        transaction: t
+      });
+
+      // 4b. Crear las nuevas disponibilidades
+      const availabilityArray = JSON.parse(availabilities);
+      if (Array.isArray(availabilityArray) && availabilityArray.length > 0) {
+        
+        const availData = availabilityArray.map(a => ({
+          psychologist_id: id,
+          weekday: a.weekday,
+          start_time: a.start_time,
+          end_time: a.end_time
+        }));
+
+        await AvailabilityModel.bulkCreate(availData, { transaction: t });
+      }
+    }
+
+    await profile.save({ transaction: t }); 
+    await t.commit(); 
 
     const updatedProfile = await PsychologistModel.findByPk(id, {
       include: {
@@ -343,6 +388,31 @@ export const deletePsychologist = async (req, res) => {
     res.status(200).json({ message: "Psicólogo/a eliminado/a" });
   } catch (error) {
     console.error("Error al eliminar psicólogo/a:", error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const getPsychologistBookedSlots = async (req, res) => {
+  try {
+    const psychologist_id = req.params.id;
+    const now = new Date();
+
+    const appointments = await AppointmentModel.findAll({
+      where: {
+        psychologist_id: psychologist_id,
+        status: {
+          [Op.or]: ['confirmed', 'pending'] // Solo queremos citas activas
+        },
+        date: {
+          [Op.gte]: now // Solo citas de hoy en adelante
+        }
+      },
+      attributes: ['date', 'duration_minutes'] // Solo necesitamos esta info
+    });
+
+    res.status(200).json(appointments);
+  } catch (error) {
+    console.error('Error al obtener citas reservadas:', error);
     res.status(400).json({ message: error.message });
   }
 };

@@ -72,12 +72,12 @@ const AppointmentModel = sequelize.define('appointment', {
   timestamps: true,
   underscored: true,
   paranoid:true,
-  indexes: [
-    { unique: false,
-      fields: ['psychologist_id', 'date'],
-    name: 'appointment_psychologist_id_date_unique' },
-    { fields: ['patient_id', 'date'] },
-  ],
+  // indexes: [
+  //   { unique: false,
+  //     fields: ['psychologist_id', 'date'],
+  //   name: 'appointment_psychologist_id_date_unique' },
+  //   { fields: ['patient_id', 'date'] },
+  // ],
 });
 
 export default AppointmentModel;
