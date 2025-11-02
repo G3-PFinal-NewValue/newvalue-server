@@ -207,3 +207,89 @@ export const deleteAppointment = async (req, res) => {
     res.status(500).json({ message: 'Error al eliminar cita', error: error.message });
   }
 };
+
+/**
+ * Actualizar estado de una cita específica
+ */
+export const updateAppointmentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Validar que el status sea válido
+    const validStatuses = ["pending", "confirmed", "cancelled", "completed"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Estado no válido. Debe ser: pending, confirmed, cancelled, o completed",
+      });
+    }
+
+    // Buscar la cita con información del paciente y psicólogo
+    const appointment = await AppointmentModel.findByPk(id, {
+      include: [
+        { model: UserModel, as: 'patient', attributes: ['id', 'first_name', 'last_name', 'email'] },
+        { model: UserModel, as: 'psychologist', attributes: ['id', 'first_name', 'last_name', 'email'] },
+      ],
+    });
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Cita no encontrada",
+      });
+    }
+
+    // Verificar permisos: solo el paciente o psicólogo involucrado puede actualizar
+    const userRole = req.user.role?.name || req.user.role;
+    const userId = req.user.id;
+
+    if (userRole === "patient" && appointment.patient_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "No tienes permisos para modificar esta cita",
+      });
+    }
+
+    if (userRole === "psychologist" && appointment.psychologist_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "No tienes permisos para modificar esta cita",
+      });
+    }
+
+    // Actualizar el estado
+    appointment.status = status;
+    await appointment.save();
+
+    res.json({
+      success: true,
+      message: "Cita actualizada exitosamente",
+      appointment: {
+        id: appointment.id,
+        patient_id: appointment.patient_id,
+        psychologist_id: appointment.psychologist_id,
+        date: appointment.date,
+        duration_minutes: appointment.duration_minutes,
+        status: appointment.status,
+        patient: appointment.patient ? {
+          first_name: appointment.patient.first_name,
+          last_name: appointment.patient.last_name,
+          email: appointment.patient.email
+        } : null,
+        psychologist: appointment.psychologist ? {
+          first_name: appointment.psychologist.first_name,
+          last_name: appointment.psychologist.last_name,
+          email: appointment.psychologist.email
+        } : null
+      }
+    });
+
+  } catch (error) {
+    console.error("Error actualizando estado de cita:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor",
+    });
+  }
+};

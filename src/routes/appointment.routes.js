@@ -6,10 +6,45 @@ import appointmentOwnershipMiddleware from '../middleware/appointmentMiddleware.
 
 const appointmentRouter = express.Router();
 
-appointmentRouter.get('/', authMiddleware, appointmentController.getAllAppointments);
-appointmentRouter.get('/:id', authMiddleware, appointmentOwnershipMiddleware, appointmentController.getAppointmentById);
-appointmentRouter.post('/', authMiddleware, roleMiddleware('patient'), appointmentController.createAppointment);
-appointmentRouter.put('/:id', authMiddleware, appointmentOwnershipMiddleware, appointmentController.updateAppointment);
-appointmentRouter.delete('/:id', authMiddleware, appointmentOwnershipMiddleware, appointmentController.deleteAppointment);
+appointmentRouter.get(
+  "/",
+  authMiddleware,
+  appointmentController.getAllAppointments
+);
+
+appointmentRouter.get(
+  "/:id",
+  authMiddleware,
+  appointmentOwnershipMiddleware,
+  appointmentController.getAppointmentById
+);
+
+appointmentRouter.post(
+  "/",
+  authMiddleware,
+  roleMiddleware("patient"),
+  appointmentController.createAppointment
+);
+
+appointmentRouter.put(
+  "/:id",
+  authMiddleware,
+  appointmentOwnershipMiddleware,
+  appointmentController.updateAppointment
+);
+
+appointmentRouter.delete(
+  "/:id",
+  authMiddleware,
+  appointmentOwnershipMiddleware,
+  appointmentController.deleteAppointment
+);
+
+// PATCH /appointment/:id - Actualizar estado de cita
+appointmentRouter.patch(
+  "/:id",
+  authMiddleware,
+  appointmentController.updateAppointmentStatus
+);
 
 export default appointmentRouter;
