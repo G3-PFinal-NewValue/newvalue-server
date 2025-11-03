@@ -9,4 +9,7 @@ availabilityRouter.post('/', availabilityController.createAvailability);
 availabilityRouter.put('/:id', availabilityController.updateAvailability);
 availabilityRouter.delete('/:id', availabilityController.deleteAvailability);
 
+//NECESARIO PARA OBTENER LAS DISPONIBILIDADES DE UN PSICÓLOGO
+availabilityRouter.get('/psychologist/:psychologistId', availabilityController.getAvailabilityByPsychologist);
+
 export default availabilityRouter;
