@@ -7,7 +7,8 @@ import {
   deactivatePsychologist,
   activatePsychologist,
   validatePsychologist,
-  deletePsychologist
+  deletePsychologist,
+  getPsychologistBookedSlots
 } from "../controllers/psychologist.controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import ownershipMiddleware from "../middleware/ownerMiddleware.js";
@@ -23,10 +24,10 @@ const upload = multer({ dest: 'uploads/' }); // carpeta temporal
 psychologistRouter.post('/', authMiddleware, roleMiddleware('psychologist'), upload.single('photo'), createPsychologistProfile);
 
 // Obtener todos los psicólogos
-psychologistRouter.get('/', authMiddleware, roleMiddleware('admin'), getAllPsychologists);
+psychologistRouter.get('/', authMiddleware, getAllPsychologists);
 
 // Obtener psicólogo por user_id
-psychologistRouter.get('/:id', authMiddleware, getPsychologistById);
+psychologistRouter.get('/:id', getPsychologistById);
 
 // Actualizar perfil de psicólogo con posible nueva foto
 psychologistRouter.put('/:id', authMiddleware, ownershipMiddleware, upload.single('photo'), updatePsychologistProfile);
@@ -42,5 +43,9 @@ psychologistRouter.patch('/:id/validate', authMiddleware, roleMiddleware('admin'
 
 // Eliminar psicólogo 
 psychologistRouter.delete('/:id', authMiddleware, ownershipMiddleware, deletePsychologist);
+
+//CA: RUTA PARA AGENDA DE PSICÓLOGOS
+
+psychologistRouter.get('/:id/booked', getPsychologistBookedSlots);
 
 export default psychologistRouter;
