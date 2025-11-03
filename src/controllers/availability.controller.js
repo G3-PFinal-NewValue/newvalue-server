@@ -13,7 +13,7 @@ export const getAllAvailabilities = async (req, res) => {
     let whereClause = {};
 
     if (req.user.role === 'psychologist') {
-      whereClause.psychologist_id = req.user.user_id;
+      whereClause.psychologist_id = req.user.id;
     }
 
     const availabilities = await AvailabilityModel.findAll({
@@ -62,7 +62,7 @@ export const createAvailability = async (req, res) => {
 
   try {
     const { weekday, start_time, end_time } = req.body;
-    const psychologist_id = req.user.user_id;
+    const psychologist_id = req.user.id;
 
     if (!weekday || !start_time || !end_time) {
       await transaction.rollback();
@@ -112,7 +112,7 @@ export const updateAvailability = async (req, res) => {
       return res.status(404).json({ message: 'No se encontró la disponibilidad' });
     }
 
-    if (availability.psychologist_id !== req.user.user_id) {
+    if (availability.psychologist_id !== req.user.id) {
       await transaction.rollback();
       return res.status(403).json({ message: 'No tienes permiso para actualizar esta disponibilidad' });
     }
@@ -162,7 +162,7 @@ export const deleteAvailability = async (req, res) => {
       return res.status(404).json({ message: 'No se encontró la disponibilidad' });
     }
 
-    if (availability.psychologist_id !== req.user.user_id) {
+    if (availability.psychologist_id !== req.user.id) {
       await transaction.rollback();
       return res.status(403).json({ message: 'No tienes permiso para eliminar esta disponibilidad' });
     }
@@ -190,7 +190,7 @@ export const deleteAvailability = async (req, res) => {
 //Validacion: verificar minimo 5 bloques semanales
 export const validateMinimumAvailability = async (req, res) => {
   try {
-    const psychologist_id = req.user.user_id
+    const psychologist_id = req.user.id
 
     const count = await AvailabilityModel.count({
       where: { psychologist_id },

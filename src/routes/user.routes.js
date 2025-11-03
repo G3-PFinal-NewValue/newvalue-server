@@ -16,6 +16,9 @@ userRouter.get('/', authMiddleware, roleMiddleware('admin'), getAllUsers);
 //ver un usuario por ID (admin)
 userRouter.get('/:id', authMiddleware, roleMiddleware('admin'), getUserById);
 
+//crear usuario (solo admin)
+userRouter.post('/', authMiddleware, roleMiddleware('admin'), createUser);
+
 //activar usuario (solo admin)
 userRouter.patch('/:id/activate', authMiddleware, roleMiddleware('admin'), activateUser);
 

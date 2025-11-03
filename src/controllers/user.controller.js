@@ -1,6 +1,8 @@
 import UserModel from "../models/UserModel.js";
 import RoleModel from "../models/RoleModel.js";
 import { generateJWT } from "../utils/generateJWT.js";
+import bcrypt from "bcrypt";
+
 
 // =========================
 // CONTROLADOR DE USUARIOS
@@ -9,11 +11,31 @@ import { generateJWT } from "../utils/generateJWT.js";
 // Obtener todos los usuarios (solo admin)
 export const getAllUsers = async (req, res) => {
     try {
+        const { role } = req.query;
+        const include = [{
+            model: RoleModel,
+            as: 'role',
+            attributes: ['name'],
+        }];
+
+        // Si se pide filtrar por rol (patient, psychologist, admin)
+        let whereClause = {};
+        if (role) {
+            const roleRecord = await RoleModel.findOne({
+                where: { name: role.toLowerCase() },
+            });
+
+            if (!roleRecord) {
+                return res.status(400).json({ message: `El rol '${role}' no existe` });
+            }
+
+            whereClause = { role_id: roleRecord.id };
+        }
         const users = await UserModel.findAll({
-            include: {
-                model: RoleModel,
-                as: 'role',
-            },
+            where: whereClause,
+            include,
+            attributes: ["id", "first_name", "last_name", "email", "created_at"],
+            order: [["id", "ASC"]],
         });
         res.status(200).json(users);
     } catch (error) {
@@ -42,16 +64,39 @@ export const getUserById = async (req, res) => {
 
 export const createUser = async (req, res) => {
     try {
-        const { email, name, roleName } = req.body;
+        const { email, first_name, last_name, password, role } = req.body;
+
+        //Validar campos basicos
+        if (!email || !first_name || !last_name || !password) {
+            return res.status(400).json({ message: "Faltan datos obligatorios" });
+        }
+
+        // Hashear la contraseña antes de guardar
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Buscar rol solicitado o asignar 'patient' por defecto
+        const roleName = role || "patient";
+        const foundRole = await RoleModel.findOne({
+            where: { name: roleName.toLowerCase() },
+        });
+
+        if (!foundRole) {
+            return res.status(400).json({ message: `Rol '${roleName}' no encontrado` });
+        }
 
         // Crear usuario
-        const newUser = await UserModel.create({ email, name });
+        const newUser = await UserModel.create({
+            email,
+            first_name,
+            last_name,
+            password: hashedPassword,
+            role_id: foundRole.id,
+        });
 
-        // Asignar rol por defecto o especificado
-        const role = await RoleModel.findOne({ where: { name: roleName || "patient" } });
-        await newUser.addRole(role);
-
-        res.status(201).json({ user: newUser, role: role.name });
+        res.status(201).json({
+            message: "Usuario creado correctamente",
+            user: newUser
+        });
     } catch (error) {
         console.error("Error al crear usuario:", error);
         res.status(400).json({ message: error.message });

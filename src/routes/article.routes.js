@@ -6,8 +6,8 @@ import roleMiddleware from '../middleware/roleMiddleware.js';
 const articleRouter = express.Router();
 
 //Público
-articleRouter.get('/', articleController.getAllArticles);
-articleRouter.get('/:id', articleController.getArticleById);
+articleRouter.get('/blog', articleController.getAllArticles);
+articleRouter.get('/blog/:id', articleController.getArticleById);
 
 //Solo admin
 articleRouter.post('/', authMiddleware, roleMiddleware("admin"), articleController.createArticle);

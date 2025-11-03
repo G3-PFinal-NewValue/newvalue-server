@@ -2,6 +2,8 @@ import { Router } from "express";
 import {
   createPsychologistProfile,
   getAllPsychologists,
+  getMyProfile,
+  updateMyProfile,
   getPsychologistById,
   updatePsychologistProfile,
   deactivatePsychologist,
@@ -19,11 +21,15 @@ const psychologistRouter = Router();
 // Configuración de Multer
 const upload = multer({ dest: 'uploads/' }); // carpeta temporal
 
+// 🔹 Ver y editar el propio perfil
+psychologistRouter.get("/profile", authMiddleware, roleMiddleware("psychologist"), getMyProfile);
+psychologistRouter.put("/profile", authMiddleware, roleMiddleware("psychologist"), upload.single("photo"), updateMyProfile);
+
 // Crear perfil de psicólogo con foto opcional
 psychologistRouter.post('/', authMiddleware, roleMiddleware('psychologist'), upload.single('photo'), createPsychologistProfile);
 
 // Obtener todos los psicólogos
-psychologistRouter.get('/', authMiddleware, roleMiddleware('admin'), getAllPsychologists);
+psychologistRouter.get('/', authMiddleware, roleMiddleware(), getAllPsychologists);
 
 // Obtener psicólogo por user_id
 psychologistRouter.get('/:id', authMiddleware, getPsychologistById);

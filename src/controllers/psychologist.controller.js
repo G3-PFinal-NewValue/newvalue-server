@@ -71,7 +71,6 @@ export const getPsychologistById = async (req, res) => {
 
 // POST: crear perfil de psicólogo con foto opcional
 export const createPsychologistProfile = async (req, res) => {
-const t = await sequelize.transaction();
 
   try {
     const user_id = req.user.id;
@@ -141,7 +140,7 @@ const t = await sequelize.transaction();
 
     res.status(201).json({ 
       message: 'Perfil de psicólogo/a creado correctamente', 
-      profile: newProfile 
+      profile: createdProfile 
     });
   } catch (error) {
     console.error('Error al crear el perfil:', error);
@@ -152,7 +151,7 @@ const t = await sequelize.transaction();
 // PUT: actualizar perfil de psicólogo con posible nueva foto
 export const updatePsychologistProfile = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { user_id: id } = req.params;
     const { license_number, specialities, professional_description, status, validated } = req.body;
 
     const profile = await PsychologistModel.findOne({ where: { user_id: id } });
@@ -291,3 +290,110 @@ export const deletePsychologist = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+//PARA EL PSICOLOGO
+
+//Ver perfil propio
+export const getMyProfile = async (req, res) => {
+  try{
+    const psychologist = await PsychologistModel.findOne({
+      where: { user_id: req.user.id },
+      include: [
+        {
+          model: SpecialityModel,
+          as: 'specialities',
+          attributes: ['id', 'name'],
+          through: { attributes: [] },
+        },
+      ],
+    });
+
+    if (!psychologist) {
+      return res.status(404).json({ message: 'Perfil no encontrado' });
+    }
+
+    res.status(200).json(psychologist);
+  } catch (error) {
+    console.error('Error al obtener el perfil:', error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+//Actualizar perfil propio
+export const updateMyProfile = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  try { 
+    const user_id = req.user.id;
+    const { license_number, specialities, professional_description, photo } = req.body;
+
+    const profile = await PsychologistModel.findOne({ 
+      where: { user_id }. 
+    transaction
+    });
+
+    if(!profile){
+      await transaction.rollback();
+      return res.status(404).json({ message: 'Perfil no encontrado' });
+    }
+
+    //Subir nueva foto si viene un archivo
+    if(req.file){
+      if(profile.photo_public_id){
+        await cloudinary.uploader.destroy(profile.photo_public_id);
+      }
+      const result = await cloudinary.uploader.upload(req.file.path, { folder: 'psychologists' });
+      profile.photo = result.secure_url;
+      profile.photo_public_id = result.public_id;
+      fs.unlinkSync(req.file.path);
+    }else if (photo){
+      //si manda directamente una url
+      profile.photo = photo;
+    }
+
+    //Actualizar campos básicos
+    if(license_number) profile.license_number = license_number;
+    if(professional_description) profile.professional_description = professional_description;
+
+    //Actualizar especialidades
+    if(specialities){
+      const specialityArray = Array.isArray(specialities)
+      ? specialities
+      : JSON.parse(specialities);
+
+      const specialityInstances = await Promise.all(
+        specialityArray.map(async (item) => {
+          if(!item) return null;
+          if(!isNaN(item)){
+            return SpecialityModel.findByPk(item);
+          }else {
+            const [speciality] = await SpecialityModel.findOrCreate({
+              where: { name: item.trim() },
+            });
+            return speciality;
+          }
+        })
+      )
+        await profile.setSpecialities(specialityInstances.filter(Boolean));
+    }
+
+    await profile.save({ transaction });
+    await transaction.commit();
+
+    const updatedProfile = await PsychologistModel.findOne({
+      where: { user_id },
+      include:[
+        {
+          model: SpecialityModel,
+          as: 'specialities',
+          attributes: ['id', 'name'],
+          through: { attributes: [] },
+        },
+      ],
+    }); 
+      res.status(200).json({ message: 'Perfil actualizado correctamente', profile: updatedProfile });
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error al actualizar perfil', error);
+    res.status(400).json({ message: error.message });
+  }
+}
