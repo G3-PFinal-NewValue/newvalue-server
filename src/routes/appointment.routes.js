@@ -1,8 +1,8 @@
-import express from 'express';
-import authMiddleware from '../middleware/authMiddleware.js';
-import * as appointmentController from '../controllers/appointment.controller.js';
-import roleMiddleware from '../middleware/roleMiddleware.js';
-import appointmentOwnershipMiddleware from '../middleware/appointmentMiddleware.js';
+import express from "express";
+import authMiddleware from "../middleware/authMiddleware.js";
+import * as appointmentController from "../controllers/appointment.controller.js";
+import roleMiddleware from "../middleware/roleMiddleware.js";
+import appointmentOwnershipMiddleware from "../middleware/appointmentMiddleware.js";
 
 const appointmentRouter = express.Router();
 
