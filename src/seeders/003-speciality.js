@@ -1,26 +1,17 @@
-import { sequelize } from '../config/database.js'; // ajusta la ruta según tu estructura
 import SpecialityModel from '../models/SpecialityModel.js';
 
-const seedSpecialities = async () => {
-  try {
-    await sequelize.sync(); // asegúrate de que las tablas existan
+export async function up(queryInterface, Sequelize) {
+  await queryInterface.bulkInsert('speciality', [
+    { name: 'Terapia Cognitivo - Conductual', created_at: new Date(), updated_at: new Date() },
+    { name: 'Ansiedad y Estrés', created_at: new Date(), updated_at: new Date() },
+    { name: 'Depresión', created_at: new Date(), updated_at: new Date() },
+    { name: 'Terapia de Pareja', created_at: new Date(), updated_at: new Date() },
+    { name: 'Mindfulness', created_at: new Date(), updated_at: new Date() },
+    { name: 'Duelo', created_at: new Date(), updated_at: new Date() },
+    { name: 'Trastornos del Sueño', created_at: new Date(), updated_at: new Date() },
+  ]);
+}
 
-    await SpecialityModel.bulkCreate([
-      { name: 'Terapia Cognitivo - Conductual' },
-      { name: 'Ansiedad y Estrés' },
-      { name: 'Depresión' },
-      { name: 'Terapia de Pareja' },
-      { name: 'Mindfulness' },
-      { name: 'Duelo' },
-      { name: 'Trastornos del Sueño' },
-    ]);
-
-    console.log('✅ Especialidades insertadas correctamente');
-    process.exit(0);
-  } catch (error) {
-    console.error('❌ Error al insertar especialidades:', error);
-    process.exit(1);
-  }
-};
-
-seedSpecialities();
+export async function down(queryInterface, Sequelize) {
+  await queryInterface.bulkDelete('speciality', null, {});
+}

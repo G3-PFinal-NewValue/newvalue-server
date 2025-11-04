@@ -5,7 +5,9 @@ import PsychologistModel from "./PsychologistModel.js";
 import SpecialityModel from "./SpecialityModel.js";
 import ArticleModel from "./ArticleModel.js"
 import CategoryArticleModel from "./CategoryArticleModel.js"
-
+import AvailabilityModel from "./AvailabilityModel.js";
+import AppointmentModel from "./AppointmentModel.js";
+import SessionModel from "./SessionModel.js";
 
 // Tabla intermedia para Psychologist <-> Speciality
 const PsychologistSpeciality = sequelize.define(
@@ -17,6 +19,48 @@ const PsychologistSpeciality = sequelize.define(
 // Relación muchos a muchos Psychologist <-> Speciality
 PsychologistModel.belongsToMany(SpecialityModel, { through: PsychologistSpeciality, as: "specialities", foreignKey: "psychologist_id" });
 SpecialityModel.belongsToMany(PsychologistModel, { through: PsychologistSpeciality, as: "psychologists", foreignKey: "speciality_id" });
+
+//CA: Agrego estas nuevas asociaciones
+// Relación User <-> Psychologist (Uno a Uno)
+// Un usuario tiene un perfil de psicólogo
+UserModel.hasOne(PsychologistModel, { foreignKey: 'user_id', as: 'psychologist_profile' });
+// Un perfil de psicólogo pertenece a un usuario
+PsychologistModel.belongsTo(UserModel, { foreignKey: 'user_id', as: 'user' });
+
+// Relación Psychologist <-> Availability (Uno a Muchos)
+// Un psicólogo tiene muchas disponibilidades
+PsychologistModel.hasMany(AvailabilityModel, { foreignKey: 'psychologist_id', as: 'availabilities' });
+// Una disponibilidad pertenece a un psicólogo
+AvailabilityModel.belongsTo(PsychologistModel, { foreignKey: 'psychologist_id', as: 'psychologist' });
+
+AppointmentModel.hasMany(SessionModel, { 
+  foreignKey: 'appointment_id', 
+  as: 'sessions' // <-- Este 'as' debe coincidir con el del controlador
+});
+
+
+// Un usuario (paciente) puede tener muchas citas
+UserModel.hasMany(AppointmentModel, { 
+  foreignKey: 'patient_id', 
+  as: 'patient_appointments' 
+});
+// Un usuario (psicólogo) puede tener muchas citas
+UserModel.hasMany(AppointmentModel, { 
+  foreignKey: 'psychologist_id', 
+  as: 'psychologist_appointments' 
+});
+
+// Una cita pertenece a un paciente (Usuario)
+AppointmentModel.belongsTo(UserModel, { 
+  foreignKey: 'patient_id', 
+  as: 'patient' 
+});
+// Una cita pertenece a un psicólogo (Usuario)
+AppointmentModel.belongsTo(UserModel, { 
+  foreignKey: 'psychologist_id', 
+  as: 'psychologist' 
+});
+
 
 // Relación Category <-> Article (una categoría tiene muchos artículos)
 CategoryArticleModel.hasMany(ArticleModel, {
@@ -47,4 +91,4 @@ ArticleModel.belongsTo(UserModel, {
 });
 
 
-export { UserModel, RoleModel, PsychologistSpeciality, PsychologistModel, SpecialityModel, ArticleModel, CategoryArticleModel };
+export { UserModel, RoleModel, PsychologistSpeciality, PsychologistModel, SpecialityModel, ArticleModel, CategoryArticleModel, AvailabilityModel, AppointmentModel, SessionModel };
