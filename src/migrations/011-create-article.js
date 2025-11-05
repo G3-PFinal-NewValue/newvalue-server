@@ -40,6 +40,13 @@ export async function up(queryInterface, Sequelize) {
       onUpdate: "CASCADE",
     },
 
+    // 🔹 NUEVO: Campo para imagen de Cloudinary
+    image: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
+
     published: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
