@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import request from 'supertest';
 
-// ========== MOCK MIDDLEWARES ==========
+
 jest.unstable_mockModule('../middleware/authMiddleware.js', () => ({
   default: (req, res, next) => next()
 }));
@@ -14,7 +14,7 @@ jest.unstable_mockModule('../middleware/ownerMiddleware.js', () => ({
   default: (req, res, next) => next()
 }));
 
-// ========== MOCK MODEL ==========
+
 jest.unstable_mockModule('../models/PatientModel.js', () => ({
   default: {
     findAll: jest.fn(),
@@ -25,17 +25,15 @@ jest.unstable_mockModule('../models/PatientModel.js', () => ({
   }
 }));
 
-// ========== IMPORT APP ==========
+
 const app = await import('../app.js').then(m => m.default);
 const PatientModel = await import('../models/PatientModel.js').then(m => m.default);
 
-// ========== TEST SUITE ==========
 describe('Patient Controller', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  // ========== GET ALL PATIENTS ==========
   describe('GET /patient - getAllPatients', () => {
     test('debe retornar lista de pacientes activos por defecto', async () => {
       const mockPatients = [
@@ -81,7 +79,6 @@ describe('Patient Controller', () => {
     });
   });
 
-  // ========== GET PATIENT BY ID ==========
   describe('GET /patient/:id - getPatientById', () => {
     test('debe retornar un paciente por ID', async () => {
       const mockPatient = { id: 1, name: 'Juan', status: 'active' };
@@ -117,7 +114,7 @@ describe('Patient Controller', () => {
     });
   });
 
-  // ========== CREATE PATIENT ==========
+
   describe('POST /patient - createPatient', () => {
     test('debe crear un nuevo paciente', async () => {
       const newPatientData = { name: 'Carlos', email: 'carlos@example.com' };
@@ -163,7 +160,7 @@ describe('Patient Controller', () => {
     });
   });
 
-  // ========== UPDATE PATIENT ==========
+ 
   describe('PUT /patient/:id - updatePatient', () => {
     test('debe actualizar un paciente', async () => {
       const updateData = { name: 'Juan Actualizado' };
@@ -205,7 +202,7 @@ describe('Patient Controller', () => {
     });
   });
 
-  // ========== DEACTIVATE PATIENT ==========
+ 
   describe('PATCH /patient/:id/deactivate - deactivatePatient', () => {
     test('debe desactivar un paciente', async () => {
       PatientModel.update.mockResolvedValue([1]);
@@ -243,7 +240,7 @@ describe('Patient Controller', () => {
     });
   });
 
-  // ========== ACTIVATE PATIENT ==========
+ 
   describe('PATCH /patient/:id/activate - activatePatient', () => {
     test('debe reactivar un paciente', async () => {
       PatientModel.update.mockResolvedValue([1]);
@@ -281,7 +278,6 @@ describe('Patient Controller', () => {
     });
   });
 
-  // ========== DELETE PATIENT ==========
   describe('DELETE /patient/:id - deletePatient', () => {
     test('debe eliminar (soft delete) un paciente', async () => {
       PatientModel.destroy.mockResolvedValue(1);
