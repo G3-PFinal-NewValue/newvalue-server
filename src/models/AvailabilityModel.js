@@ -22,10 +22,18 @@ const AvailabilityModel = sequelize.define('availability', {
 
   weekday: {
     type: DataTypes.SMALLINT,
-    allowNull: false,
+    allowNull: true, 
     validate: {
       min: 1,
       max: 7,
+    },
+  },
+
+  specific_date: { // Campo para fechas específicas
+    type: DataTypes.DATEONLY,
+    allowNull: false,
+    validate: {
+      isDate: true,
     },
   },
 
@@ -37,6 +45,17 @@ const AvailabilityModel = sequelize.define('availability', {
   end_time: {
     type: DataTypes.TIME,
     allowNull: false,
+  },
+
+  is_available: { //  Determina si está disponible (true) o no disponible (false)
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+  },
+
+  notes: { //  Campo opcional para notas adicionales
+    type: DataTypes.TEXT,
+    allowNull: true,
   },
 }, {
   tableName: 'availability',
