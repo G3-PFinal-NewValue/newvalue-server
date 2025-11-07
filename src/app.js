@@ -7,7 +7,6 @@ import appointmentRouter from './routes/appointment.routes.js';
 import availabilityRouter from './routes/availability.routes.js';
 import sessionRouter from './routes/session.routes.js';
 import articleRouter from './routes/article.routes.js';
-import categoryRouter from './routes/category.routes.js';
 import userRouter from './routes/user.routes.js';
 
 
