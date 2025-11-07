@@ -9,6 +9,7 @@ import AppointmentModel from "./AppointmentModel.js";
 import AvailabilityModel from "./AvailabilityModel.js";
 import SessionModel from "./SessionModel.js";
 import PatientModel from "./PatientModel.js";
+import LanguageModel from "./LanguageModel.js";
 
 // Tabla intermedia para Psychologist <-> Speciality
 const PsychologistSpeciality = sequelize.define(
@@ -110,7 +111,7 @@ AppointmentModel.belongsTo(AvailabilityModel, {
 });
 
 // ------------------------------------
-// (Opcional) RELACIÓN PSYCHOLOGIST/PATIENT <-> APPOINTMENT
+//RELACIÓN PSYCHOLOGIST/PATIENT <-> APPOINTMENT
 // ------------------------------------
 PsychologistModel.hasMany(AppointmentModel, {
   foreignKey: "psychologist_id",
@@ -133,4 +134,24 @@ AppointmentModel.belongsTo(UserModel, {
 });
 
 
-export { UserModel, RoleModel, PatientModel, PsychologistSpeciality, PsychologistModel, SpecialityModel, ArticleModel, CategoryArticleModel, AvailabilityModel, AppointmentModel, SessionModel};
+PsychologistModel.belongsToMany(LanguageModel, {
+  through: 'psychologist_languages',
+  foreignKey: 'psychologist_id',
+  otherKey: 'language_id',
+  as: 'languages',
+  timestamps: false,
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+LanguageModel.belongsToMany(PsychologistModel, {
+  through: 'psychologist_languages',
+  foreignKey: 'language_id',
+  otherKey: 'psychologist_id',
+  as: 'psychologists',
+  timestamps: false,
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+export { UserModel, RoleModel, PatientModel, PsychologistSpeciality, PsychologistModel, SpecialityModel, ArticleModel, CategoryArticleModel, AvailabilityModel, AppointmentModel, SessionModel, LanguageModel};

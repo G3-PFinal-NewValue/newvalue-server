@@ -1,8 +1,9 @@
 import PsychologistModel from "../models/PsychologistModel.js";
 import cloudinary from '../utils/cloudinaryConfig.js';
 import SpecialityModel from "../models/SpecialityModel.js";
+import LanguageModel from "../models/LanguageModel.js";
 import fs from 'fs';
-import {sequelize} from "../config/database.js";
+import { sequelize } from "../config/database.js";
 
 
 // Obtener todos los psicólogos (activos y validados)
@@ -45,19 +46,25 @@ export const getAllPsychologists = async (req, res) => {
 // GET por user_id
 export const getPsychologistById = async (req, res) => {
   try {
-    const profile = await PsychologistModel.findOne({ 
+    const profile = await PsychologistModel.findOne({
       where: { user_id: req.params.id },
       include: [
         {
           model: SpecialityModel,
           as: 'specialities',
-          attributes: ['id','name'],
+          attributes: ['id', 'name'],
           through: {
             attributes: [],
           },
         },
+        {
+          model: LanguageModel,
+          as: 'languages',
+          attributes: ['id', 'name'],
+          through: { attributes: [] }, // oculta la tabla intermedia
+        },
       ],
-});
+    });
 
     if (!profile) {
       return res.status(404).json({ message: 'Psicólogo/a no encontrado/a' });
@@ -77,13 +84,13 @@ export const createPsychologistProfile = async (req, res) => {
     const { license_number, specialities, professional_description } = req.body;
 
     //Validación Basica
-    if (!license_number){
+    if (!license_number) {
       return res.status(400).json({ message: "El número de colegiado es obligatorio" });
     }
 
     //Verificar si ya existe un perfil para este usuario
     const existingProfile = await PsychologistModel.findOne({ where: { user_id } });
-    if (existingProfile){
+    if (existingProfile) {
       return res.status(400).json({ message: "Ya existe un perfil para este usuario" });
     }
 
@@ -105,19 +112,19 @@ export const createPsychologistProfile = async (req, res) => {
       professional_description,
       photo: imageUrl,
       photo_public_id: publicId,
-      status: 'active',     
-      validated: false        
+      status: 'active',
+      validated: false
     });
 
     //si envia especialidades ( pueden ser nombres o ids)
-    if (specialities){
-      const specialityArray =  Array.isArray(specialities) 
-      ? specialities
-      : JSON.parse(specialities);
+    if (specialities) {
+      const specialityArray = Array.isArray(specialities)
+        ? specialities
+        : JSON.parse(specialities);
 
       const specialityInstances = await Promise.all(
         specialityArray.map(async (item) => {
-          if(!item) return null;
+          if (!item) return null;
           if (!isNaN(item)) {
             return SpecialityModel.findByPk(item);
           } else {
@@ -131,16 +138,16 @@ export const createPsychologistProfile = async (req, res) => {
 
       //asociar las especialidades al psicologo
       await newProfile.setSpecialities(specialityInstances.filter(Boolean));
-      }
-    
-      // Incluir especialidades en la respuesta
+    }
+
+    // Incluir especialidades en la respuesta
     const createdProfile = await PsychologistModel.findByPk(newProfile.user_id, {
       include: { model: SpecialityModel, as: 'specialities', attributes: ['id', 'name'], through: { attributes: [] } },
     });
 
-    res.status(201).json({ 
-      message: 'Perfil de psicólogo/a creado correctamente', 
-      profile: createdProfile 
+    res.status(201).json({
+      message: 'Perfil de psicólogo/a creado correctamente',
+      profile: createdProfile
     });
   } catch (error) {
     console.error('Error al crear el perfil:', error);
@@ -281,7 +288,7 @@ export const deletePsychologist = async (req, res) => {
 
     const rowsDeleted = await PsychologistModel.destroy({
       where: { user_id: req.params.id },
-      force: false, 
+      force: false,
     });
 
     res.status(200).json({ message: 'Psicólogo/a eliminado/a' });
@@ -295,7 +302,7 @@ export const deletePsychologist = async (req, res) => {
 
 //Ver perfil propio
 export const getMyProfile = async (req, res) => {
-  try{
+  try {
     const psychologist = await PsychologistModel.findOne({
       where: { user_id: req.user.id },
       include: [
@@ -304,6 +311,12 @@ export const getMyProfile = async (req, res) => {
           as: 'specialities',
           attributes: ['id', 'name'],
           through: { attributes: [] },
+        },
+        {
+          model: LanguageModel,
+          as: 'languages',
+          attributes: ['id', 'name'],
+          through: { attributes: [] }, // oculta la tabla intermedia
         },
       ],
     });
@@ -322,50 +335,51 @@ export const getMyProfile = async (req, res) => {
 //Actualizar perfil propio
 export const updateMyProfile = async (req, res) => {
   const transaction = await sequelize.transaction();
-  try { 
+  try {
     const user_id = req.user.id;
-    const { license_number, specialities, professional_description, photo } = req.body;
+    const { license_number, specialities, professional_description, photo, languages } = req.body;
 
-    const profile = await PsychologistModel.findOne({ 
-      where: { user_id }. 
-    transaction
+    const profile = await PsychologistModel.findOne({
+      where: { user_id },
+      include: [{ association: 'languages' }, { association: 'specialities' }],
+        transaction
     });
 
-    if(!profile){
+    if (!profile) {
       await transaction.rollback();
       return res.status(404).json({ message: 'Perfil no encontrado' });
     }
 
     //Subir nueva foto si viene un archivo
-    if(req.file){
-      if(profile.photo_public_id){
+    if (req.file) {
+      if (profile.photo_public_id) {
         await cloudinary.uploader.destroy(profile.photo_public_id);
       }
       const result = await cloudinary.uploader.upload(req.file.path, { folder: 'psychologists' });
       profile.photo = result.secure_url;
       profile.photo_public_id = result.public_id;
       fs.unlinkSync(req.file.path);
-    }else if (photo){
+    } else if (photo) {
       //si manda directamente una url
       profile.photo = photo;
     }
 
     //Actualizar campos básicos
-    if(license_number) profile.license_number = license_number;
-    if(professional_description) profile.professional_description = professional_description;
+    if (license_number) profile.license_number = license_number;
+    if (professional_description) profile.professional_description = professional_description;
 
     //Actualizar especialidades
-    if(specialities){
+    if (specialities) {
       const specialityArray = Array.isArray(specialities)
-      ? specialities
-      : JSON.parse(specialities);
+        ? specialities
+        : JSON.parse(specialities);
 
       const specialityInstances = await Promise.all(
         specialityArray.map(async (item) => {
-          if(!item) return null;
-          if(!isNaN(item)){
+          if (!item) return null;
+          if (!isNaN(item)) {
             return SpecialityModel.findByPk(item);
-          }else {
+          } else {
             const [speciality] = await SpecialityModel.findOrCreate({
               where: { name: item.trim() },
             });
@@ -373,7 +387,33 @@ export const updateMyProfile = async (req, res) => {
           }
         })
       )
-        await profile.setSpecialities(specialityInstances.filter(Boolean));
+      await profile.setSpecialities(specialityInstances.filter(Boolean));
+    }
+
+    // Actualizar idiomas (si se envía el campo)
+    if (languages) {
+      const languageArray = Array.isArray(languages)
+        ? languages
+        : JSON.parse(languages);
+
+      const languageInstances = await Promise.all(
+        languageArray.map(async (item) => {
+          if (!item) return null;
+          if (!isNaN(item)) {
+            // si es id
+            return LanguageModel.findByPk(item);
+          } else {
+            // si es nombre nuevo
+            const [language] = await LanguageModel.findOrCreate({
+              where: { name: item.trim() },
+              defaults: {code: null},
+              transaction,
+            });
+            return language;
+          }
+        })
+      );
+      await profile.setLanguages(languageInstances.filter(Boolean));
     }
 
     await profile.save({ transaction });
@@ -381,16 +421,22 @@ export const updateMyProfile = async (req, res) => {
 
     const updatedProfile = await PsychologistModel.findOne({
       where: { user_id },
-      include:[
+      include: [
         {
           model: SpecialityModel,
           as: 'specialities',
           attributes: ['id', 'name'],
           through: { attributes: [] },
         },
+        {
+          model: LanguageModel,
+          as: 'languages',
+          attributes: ['id', 'name'],
+          through: { attributes: [] },
+        },
       ],
-    }); 
-      res.status(200).json({ message: 'Perfil actualizado correctamente', profile: updatedProfile });
+    });
+    res.status(200).json({ message: 'Perfil actualizado correctamente', profile: updatedProfile });
   } catch (error) {
     await transaction.rollback();
     console.error('Error al actualizar perfil', error);
