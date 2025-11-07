@@ -2,6 +2,7 @@ import express from 'express';
 import * as articleController from '../controllers/article.controller.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 import roleMiddleware from '../middleware/roleMiddleware.js';
+import upload from '../middleware/uploadMiddleware.js';
 
 const articleRouter = express.Router();
 
@@ -9,9 +10,9 @@ const articleRouter = express.Router();
 articleRouter.get('/blog', articleController.getAllArticles);
 articleRouter.get('/blog/:id', articleController.getArticleById);
 
-//Solo admin
-articleRouter.post('/', authMiddleware, roleMiddleware("admin"), articleController.createArticle);
-articleRouter.put('/:id', authMiddleware, roleMiddleware("admin"), articleController.updateArticle);
-articleRouter.delete('/:id', authMiddleware, roleMiddleware("admin"),articleController.deleteArticle);
+// Solo admin
+articleRouter.post('/', authMiddleware, roleMiddleware("admin"), upload.single('image'), articleController.createArticle);
+articleRouter.put('/:id', authMiddleware, roleMiddleware("admin"), upload.single('image'), articleController.updateArticle);
+articleRouter.delete('/:id', authMiddleware, roleMiddleware("admin"), articleController.deleteArticle);
 
 export default articleRouter;

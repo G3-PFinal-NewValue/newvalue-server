@@ -17,11 +17,18 @@ export async function up(queryInterface, Sequelize) {
       password_hash: hashedPassword,
       first_name: "Admin",
       last_name: "Cora Mind",
+      phone: "+34 600000000",
+      postal_code: "28001",
+      province: "Madrid",
+      full_address: "Sin dirección aún",
+      city: "Madrid",
+      country: "España",
+      dni_nie_cif: "X0000000X",
       avatar: "https://res.cloudinary.com/dkm0ahny1/image/upload/v1761208562/coramind_logo_wndauq.svg",
       status: "active",
       role_id: 1,
       created_at: new Date(),
-      updated_at: new Date()
+      updated_at: new Date(),
     }
   ]);
 }

@@ -34,4 +34,7 @@ availabilityRouter.delete('/:id', authMiddleware, roleMiddleware('psychologist',
 //validar minimo de disponibilidades (solo admin)
 availabilityRouter.get('/validate/minimum', authMiddleware, roleMiddleware('admin'), availabilityController.validateMinimumAvailability);
 
+//NECESARIO PARA OBTENER LAS DISPONIBILIDADES DE UN PSICÓLOGO
+availabilityRouter.get('/psychologist/:psychologistId', availabilityController.getAvailabilityByPsychologist);
+
 export default availabilityRouter;

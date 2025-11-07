@@ -10,16 +10,22 @@ import {sequelize} from "../config/database.js";
 
 // Obtener todas las citas
 export const getAllAppointments = async (req, res) => {
-    try {
-      const { page = 1, limit = 10, psychologist_id, patient_id, status} = req.query;
-      const offset = (page - 1) * limit;
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      psychologist_id,
+      patient_id,
+      status,
+    } = req.query;
+    const offset = (page - 1) * limit;
 
     //que pacientes solo vean sus citas y psicólogos las suyas
     let whereClause = {};
 
-    if (req.user.role === 'patient') {
+    if (req.user.role === "patient") {
       whereClause.patient_id = req.user.id;
-    } else if (req.user.role === 'psychologist') {
+    } else if (req.user.role === "psychologist") {
       whereClause.psychologist_id = req.user.id;
     }
 
@@ -28,26 +34,38 @@ export const getAllAppointments = async (req, res) => {
     if (patient_id) whereClause.patient_id = patient_id;
     if (status) whereClause.status = status;
 
-    const {rows: appointments, count} = await AppointmentModel.findAndCountAll({
-      where: whereClause,
-      include: [
-        { model: UserModel, as: 'patient', attributes: ['id', 'name', 'email'] },
-        { model: UserModel, as: 'psychologist', attributes: ['id', 'name', 'email'] },
-        { model: SessionModel, as: 'sessions' },
-      ],
-      order: [['date', 'ASC']],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-    });
+    const { rows: appointments, count } =
+      await AppointmentModel.findAndCountAll({
+        where: whereClause,
+        include: [
+          // CA: antes tenía name y en el modelo es last_name
+          {
+            model: UserModel,
+            as: "patient",
+            attributes: ["id", "first_name", "last_name", "email"],
+          },
+          {
+            model: UserModel,
+            as: "psychologist",
+            attributes: ["id", "first_name", "last_name", "email"],
+          },
+          { model: SessionModel, as: "sessions" },
+        ],
+        order: [["date", "ASC"]],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      });
     res.status(200).json({
-    total: count,
-    page: parseInt(page),
-    totalPages: Math.ceil(count / limit),
-    appointments,
+      total: count,
+      page: parseInt(page),
+      totalPages: Math.ceil(count / limit),
+      appointments,
     });
   } catch (error) {
-    console.error('Error al recuperar citas:', error);
-    res.status(500).json({ message: 'Error al recuperar citas', error: error.message });
+    console.error("Error al recuperar citas:", error);
+    res
+      .status(500)
+      .json({ message: "Error al recuperar citas", error: error.message });
   }
 };
 
@@ -58,28 +76,42 @@ export const getAppointmentById = async (req, res) => {
 
     const appointment = await AppointmentModel.findByPk(id, {
       include: [
-        { model: UserModel, as: 'patient', attributes: ['id', 'name', 'email']},
-        { model: UserModel, as: 'psychologist', attributes: ['id', 'name', 'email']},
-        { model: SessionModel, as: 'sessions' },
+        {
+          model: UserModel,
+          as: "patient",
+          attributes: ["id", "name", "email"],
+        },
+        {
+          model: UserModel,
+          as: "psychologist",
+          attributes: ["id", "name", "email"],
+        },
+        { model: SessionModel, as: "sessions" },
       ],
     });
     if (!appointment) {
-      return res.status(404).json({ message: 'No se ha encontrado ninguna cita.' });
+      return res
+        .status(404)
+        .json({ message: "No se ha encontrado ninguna cita." });
     }
 
     //Validar que quien consulta la cita sea el apciente, psicologo o el admin
     if (
-      req.user.role !== 'admin' &&
+      req.user.role !== "admin" &&
       req.user.id !== appointment.patient_id &&
       req.user.id !== appointment.psychologist_id
-    ){
-      return res.status(403).json({message: 'No tienes permiso para ver esta cita.'})
+    ) {
+      return res
+        .status(403)
+        .json({ message: "No tienes permiso para ver esta cita." });
     }
 
     res.status(200).json(appointment);
   } catch (error) {
-    console.error('Error al recuperar cita:', error);
-    res.status(500).json({ message: 'Error al recuperar cita', error: error.message });
+    console.error("Error al recuperar cita:", error);
+    res
+      .status(500)
+      .json({ message: "Error al recuperar cita", error: error.message });
   }
 };
 
@@ -93,7 +125,7 @@ export const createAppointment = async (req, res) => {
     //Validaciones Basicas
     if (!availability_id || !psychologist_id) {
       await transaction.rollback();
-        return res.status(400).json({message:'Faltan datos obligatorios'})
+      return res.status(400).json({ message: "Faltan datos obligatorios" });
     }
 
     // Validar la disponibilidad seleccionada
@@ -135,8 +167,10 @@ export const createAppointment = async (req, res) => {
     res.status(201).json({message: 'Cita creada correctamente', appointment:newAppointment});
   } catch (error) {
     await transaction.rollback();
-    console.error('Error al crear cita:', error);
-    res.status(500).json({ message: 'Error al crear cita', error:error.message });
+    console.error("Error al crear cita:", error);
+    res
+      .status(500)
+      .json({ message: "Error al crear cita", error: error.message });
   }
 };
 
@@ -150,15 +184,15 @@ export const updateAppointment = async (req, res) => {
     const appointment = await AppointmentModel.findByPk(id, { transaction });
     if (!appointment) {
       await transaction.rollback();
-      return res.status(404).json({ message: 'Cita no encontrada'});
+      return res.status(404).json({ message: "Cita no encontrada" });
     }
 
     //Validar permisos
     if (
-      req.user.role !== 'admin' &&
+      req.user.role !== "admin" &&
       req.user.id !== appointment.patient_id &&
       req.user.id !== appointment.psychologist_id
-    ){
+    ) {
       await transaction.rollback();
       return res.status(403).json({message: 'No tienes permiso para editar esta cita.'})
     }
@@ -180,11 +214,15 @@ export const updateAppointment = async (req, res) => {
     await appointment.save({ transaction });
     await transaction.commit();
 
-    res.status(200).json({ message: 'Cita actualizada correctamente', appointment });
+    res
+      .status(200)
+      .json({ message: "Cita actualizada correctamente", appointment });
   } catch (error) {
     await transaction.rollback();
-    console.error('Error al actualizar cita:', error);
-    res.status(500).json({ message: 'Error al actualizar cita', error: error.message });
+    console.error("Error al actualizar cita:", error);
+    res
+      .status(500)
+      .json({ message: "Error al actualizar cita", error: error.message });
   }
 };
 
@@ -197,15 +235,15 @@ export const deleteAppointment = async (req, res) => {
     const appointment = await AppointmentModel.findByPk(id, { transaction });
     if (!appointment) {
       await transaction.rollback();
-      return res.status(404).json({ message: 'Cita no encontrada'});
+      return res.status(404).json({ message: "Cita no encontrada" });
     }
 
     //Validar permisos
     if (
-      req.user.role !== 'admin' &&
+      req.user.role !== "admin" &&
       req.user.id !== appointment.patient_id &&
       req.user.id !== appointment.psychologist_id
-    ){
+    ) {
       await transaction.rollback();
       return res.status(403).json({message: 'No tienes permiso para eliminar esta cita.'})
     }
@@ -222,10 +260,110 @@ export const deleteAppointment = async (req, res) => {
     await appointment.destroy({ transaction });
     await transaction.commit();
 
-    res.status(200).json({ message: 'Cita eliminada correctamente' });
+    res.status(200).json({ message: "Cita eliminada correctamente" });
   } catch (error) {
     await transaction.rollback();
-    console.error('Error al eliminar cita:', error);
-    res.status(500).json({ message: 'Error al eliminar cita', error: error.message });
+    console.error("Error al eliminar cita:", error);
+    res
+      .status(500)
+      .json({ message: "Error al eliminar cita", error: error.message });
+  }
+};
+
+/**
+ * Actualizar estado de una cita específica
+ */
+export const updateAppointmentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Validar que el status sea válido
+    const validStatuses = ["pending", "confirmed", "cancelled", "completed"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Estado no válido. Debe ser: pending, confirmed, cancelled, o completed",
+      });
+    }
+
+    // Buscar la cita con información del paciente y psicólogo
+    const appointment = await AppointmentModel.findByPk(id, {
+      include: [
+        {
+          model: UserModel,
+          as: "patient",
+          attributes: ["id", "first_name", "last_name", "email"],
+        },
+        {
+          model: UserModel,
+          as: "psychologist",
+          attributes: ["id", "first_name", "last_name", "email"],
+        },
+      ],
+    });
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Cita no encontrada",
+      });
+    }
+
+    // Verificar permisos: solo el paciente o psicólogo involucrado puede actualizar
+    const userRole = req.user.role?.name || req.user.role;
+    const userId = req.user.id;
+
+    if (userRole === "patient" && appointment.patient_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "No tienes permisos para modificar esta cita",
+      });
+    }
+
+    if (userRole === "psychologist" && appointment.psychologist_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "No tienes permisos para modificar esta cita",
+      });
+    }
+
+    // Actualizar el estado
+    appointment.status = status;
+    await appointment.save();
+
+    res.json({
+      success: true,
+      message: "Cita actualizada exitosamente",
+      appointment: {
+        id: appointment.id,
+        patient_id: appointment.patient_id,
+        psychologist_id: appointment.psychologist_id,
+        date: appointment.date,
+        duration_minutes: appointment.duration_minutes,
+        status: appointment.status,
+        patient: appointment.patient
+          ? {
+              first_name: appointment.patient.first_name,
+              last_name: appointment.patient.last_name,
+              email: appointment.patient.email,
+            }
+          : null,
+        psychologist: appointment.psychologist
+          ? {
+              first_name: appointment.psychologist.first_name,
+              last_name: appointment.psychologist.last_name,
+              email: appointment.psychologist.email,
+            }
+          : null,
+      },
+    });
+  } catch (error) {
+    console.error("Error actualizando estado de cita:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor",
+    });
   }
 };

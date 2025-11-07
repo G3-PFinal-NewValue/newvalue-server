@@ -1,6 +1,7 @@
 import express from 'express';
 import authMiddleware from '../middleware/authMiddleware.js';
 import roleMiddleware from '../middleware/roleMiddleware.js';
+import { createUserAndSendEmail } from '../controllers/firstSession.controller.js';
 import { getAllUsers, getUserById, createUser, updateUser, deactivateUser, activateUser, deleteUser, assignRole } from '../controllers/user.controller.js';
 import ownerMiddleware from '../middleware/ownerMiddleware.js';
 
@@ -18,6 +19,7 @@ userRouter.get('/:id', authMiddleware, roleMiddleware('admin'), getUserById);
 
 //crear usuario (solo admin)
 userRouter.post('/', authMiddleware, roleMiddleware('admin'), createUser);
+userRouter.post('/', createUserAndSendEmail);
 
 //activar usuario (solo admin)
 userRouter.patch('/:id/activate', authMiddleware, roleMiddleware('admin'), activateUser);
@@ -37,5 +39,6 @@ userRouter.patch('/:id/assign-role', authMiddleware, roleMiddleware('admin'), as
 
 // Actualizar propio usuario
 userRouter.put("/:id", authMiddleware, ownerMiddleware, updateUser);
+
 
 export default userRouter;

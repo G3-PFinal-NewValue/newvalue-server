@@ -1,53 +1,56 @@
-import bcrypt from 'bcrypt';
-import authService from '../services/auth.service.js';
-import UserModel from '../models/UserModel.js';
-import RoleModel from '../models/RoleModel.js';
-import { generateJWT } from '../utils/generateJWT.js';
+import bcrypt from "bcrypt";
+import authService from "../services/auth.service.js";
+import UserModel from "../models/UserModel.js";
+import RoleModel from "../models/RoleModel.js";
+import { generateJWT } from "../utils/generateJWT.js";
+import transporter from "../config/nodemailer.js";
+
 
 // Login con Google
 export const googleLogin = async (req, res) => {
   try {
-    console.log('=== CONTROLLER: googleLogin ===');
+    console.log("=== CONTROLLER: googleLogin ===");
     const { token } = req.body;
-    
-    console.log('1. Token recibido en body:', token ? 'SÍ' : 'NO');
-    
+
+    console.log("1. Token recibido en body:", token ? "SÍ" : "NO");
+
     if (!token) {
-      console.log('❌ No se recibió token');
-      return res.status(400).json({ message: 'Token requerido' });
+      console.log("❌ No se recibió token");
+      return res.status(400).json({ message: "Token requerido" });
     }
 
-    console.log('2. Llamando a authService.googleLogin...');
+    console.log("2. Llamando a authService.googleLogin...");
     const data = await authService.googleLogin(token);
-    
-    console.log('3. Datos recibidos de authService:', data ? 'SÍ' : 'NO');
-    
+
+    console.log("3. Datos recibidos de authService:", data ? "SÍ" : "NO");
+
     if (!data) {
-      console.error('❌ authService.googleLogin devolvió datos vacíos');
-      return res.status(500).json({ message: 'Error al procesar login de Google' });
+      console.error("❌ authService.googleLogin devolvió datos vacíos");
+      return res
+        .status(500)
+        .json({ message: "Error al procesar login de Google" });
     }
 
-    console.log('4. Verificando data.user...', data.user ? 'SÍ' : 'NO');
-    
+    console.log("4. Verificando data.user...", data.user ? "SÍ" : "NO");
+
     if (!data.user) {
-      console.error('❌ authService.googleLogin no devolvió usuario');
-      console.error('Datos completos:', JSON.stringify(data, null, 2));
-      return res.status(400).json({ message: 'User is not defined' });
+      console.error("❌ authService.googleLogin no devolvió usuario");
+      console.error("Datos completos:", JSON.stringify(data, null, 2));
+      return res.status(400).json({ message: "User is not defined" });
     }
 
-    console.log('✅ Login con Google exitoso para:', data.user.email);
-    console.log('5. Enviando respuesta al cliente...');
+    console.log("✅ Login con Google exitoso para:", data.user.email);
+    console.log("5. Enviando respuesta al cliente...");
     res.status(200).json(data);
-    
   } catch (error) {
-    console.error('❌ ERROR CAPTURADO en googleLogin controller:');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    
-    res.status(500).json({ 
-      message: error.message || 'Error interno del servidor',
-      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    console.error("❌ ERROR CAPTURADO en googleLogin controller:");
+    console.error("Error name:", error.name);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
+
+    res.status(500).json({
+      message: error.message || "Error interno del servidor",
+      error: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
 };
@@ -55,50 +58,79 @@ export const googleLogin = async (req, res) => {
 // Registro con email y contraseña
 export const registerController = async (req, res) => {
   try {
-    const { first_name, last_name, email, password, role } = req.body;
+    const {
+      first_name,
+      last_name,
+      email,
+      password,
+      role,
+      phone,
+      postal_code,
+      province,
+      full_address,
+      city,
+      country,
+      dni_nie_cif,
+    } = req.body;
 
-    // Validar campos obligatorios
-    if (!first_name || !last_name || !email || !password) {
-      return res.status(400).json({ message: 'Todos los campos son obligatorios' });
-    }
-
-    // Verificar si el usuario ya existe
     const existingUser = await UserModel.findOne({ where: { email } });
     if (existingUser) {
-      return res.status(400).json({ message: 'El email ya está registrado' });
+      return res.status(400).json({ message: "El email ya está registrado" });
     }
 
-    // Establecer el rol por defecto si no se envía
-    const roleName = role ? role.toLowerCase() : 'patient';
-
-    // Buscar rol en la base de datos
+    const roleName = role ? role.toLowerCase() : "patient";
     const roleRecord = await RoleModel.findOne({ where: { name: roleName } });
     if (!roleRecord) {
-      return res.status(400).json({ message: 'Rol no válido o no encontrado.' });
+      return res
+        .status(400)
+        .json({ message: "Rol no válido o no encontrado." });
     }
 
-    // Hashear contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Crear usuario
     const newUser = await UserModel.create({
       first_name,
       last_name,
       email,
       password_hash: hashedPassword,
       role_id: roleRecord.id,
-      status: 'active',
+      status: "active",
+      phone,
+      postal_code,
+      province,
+      full_address,
+      city,
+      country,
+      dni_nie_cif,
     });
 
-    // Generar token JWT
+    // === 📧 Enviar correo de bienvenida ===
+    await transporter.sendMail({
+      from: `"Cora Mind" <${process.env.SMTP_USER}>`,
+      to: newUser.email,
+      subject: "Bienvenida a Cora Mind",
+      html: `
+        <div style="background-color: #f4f1e8; font-family: 'Visby', system-ui, sans-serif; color: #333; padding: 30px 20px; font-size: 16px; line-height: 1.6;">
+          <div style="text-align: center; margin-bottom: 25px;">
+            <img src="https://res.cloudinary.com/dkm0ahny1/image/upload/v1762168143/coramind-logo-email_aiwngo.png" width="140" alt="Cora Mind Logo" />
+            <h2 style="color: #ee9271; margin: 10px 0;">Bienvenida, ${newUser.first_name}</h2>
+          </div>
+          <p>Tu cuenta ha sido creada correctamente en <strong>Cora Mind</strong>.</p>
+          <p>Ya puedes iniciar sesión con tu correo electrónico para acceder a tu área personal.</p>
+          <p>Gracias por confiar en nosotros.<br><strong>El equipo de Cora Mind</strong></p>
+        </div>
+      `,
+    });
+
+    // === 🔐 Generar token JWT ===
     const token = generateJWT({
       id: newUser.id,
       email: newUser.email,
-      role: roleRecord.name
+      role: roleRecord.name,
     });
 
     res.status(201).json({
-      message: 'Usuario registrado exitosamente',
+      message: "Usuario registrado exitosamente",
       user: {
         id: newUser.id,
         first_name: newUser.first_name,
@@ -109,8 +141,15 @@ export const registerController = async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error('Error en registro:', error);
-    res.status(500).json({ message: 'Error en el registro', error: error.message });
+    console.error("Error en registro:", error);
+    if (error.name === "SequelizeValidationError") {
+      return res
+        .status(400)
+        .json({ message: error.errors.map((e) => e.message).join(", ") });
+    }
+    res
+      .status(500)
+      .json({ message: "Error en el registro", error: error.message });
   }
 };
 
@@ -121,32 +160,34 @@ export const loginController = async (req, res) => {
 
     // Verificar que se envíen los campos
     if (!email || !password) {
-      return res.status(400).json({ message: 'Correo y contraseña requeridos.' });
+      return res
+        .status(400)
+        .json({ message: "Correo y contraseña requeridos." });
     }
 
     // Buscar usuario con la relación 'role'
-    const user = await UserModel.findOne({ 
-      where: { email }, 
-      include: { 
-        model: RoleModel, 
-        as: 'role',
-        attributes: ['id', 'name']
-      }
+    const user = await UserModel.findOne({
+      where: { email },
+      include: {
+        model: RoleModel,
+        as: "role",
+        attributes: ["id", "name"],
+      },
     });
 
     if (!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
+      return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
     // Comparar contraseñas
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
-      return res.status(401).json({ message: 'Contraseña incorrecta.' });
+      return res.status(401).json({ message: "Contraseña incorrecta." });
     }
 
     // Verificar si el usuario está activo
-    if (user.status !== 'active') {
-      return res.status(403).json({ message: 'Cuenta inactiva o suspendida.' });
+    if (user.status !== "active") {
+      return res.status(403).json({ message: "Cuenta inactiva o suspendida." });
     }
 
     const token = generateJWT({
@@ -156,18 +197,18 @@ export const loginController = async (req, res) => {
     });
 
     res.status(200).json({
-      message: 'Inicio de sesión exitoso',
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        first_name: user.first_name, 
-        last_name: user.last_name, 
-        role: user.role.name 
+      message: "Inicio de sesión exitoso",
+      user: {
+        id: user.id,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        role: user.role.name,
       },
       token,
     });
   } catch (error) {
-    console.error('Error en login:', error);
+    console.error("Error en login:", error);
     res.status(500).json({ message: error.message });
   }
 };
