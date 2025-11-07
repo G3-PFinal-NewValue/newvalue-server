@@ -18,7 +18,7 @@ userRouter.get('/', authMiddleware, roleMiddleware('admin'), getAllUsers);
 userRouter.get('/:id', authMiddleware, roleMiddleware('admin'), getUserById);
 
 //crear usuario (solo admin)
-userRouter.post('/', authMiddleware, roleMiddleware('admin'), createUser);
+//userRouter.post('/', authMiddleware, roleMiddleware('admin'), createUser);
 userRouter.post('/', createUserAndSendEmail);
 
 //activar usuario (solo admin)

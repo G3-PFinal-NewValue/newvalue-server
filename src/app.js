@@ -1,5 +1,6 @@
 import express from 'express';
 import corsConfig from './config/cors.config.js';
+import { connectDB } from './config/database.js';
 import './models/associations.js'
 
 //rutas
@@ -18,6 +19,7 @@ const app = express();
 // Middlewares
 app.use(express.json());
 app.use(corsConfig);
+connectDB();
 
 // Rutas
 app.use('/auth', authRouter);
