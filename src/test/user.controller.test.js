@@ -29,7 +29,7 @@ describe('User Controller - CRUD Tests', () => {
         .get('/user')
         .set('Authorization', adminToken)
         .catch(err => {
-          // Puede fallar por token inválido (403) pero la ruta existe
+          
           expect([200, 403]).toContain(err.status);
           return { status: err.status };
         });
@@ -144,7 +144,6 @@ describe('User Controller - CRUD Tests', () => {
         .send({})
         .expect('Content-Type', /json/)
         .catch(err => {
-          // Algunos errores pueden venir con JSON
           if (err.response) {
             expect(err.response.type).toMatch(/json/);
           }
@@ -159,11 +158,10 @@ describe('User Controller - CRUD Tests', () => {
           .patch('/user/assign-role')
           .send({ userId: 1, roleName: 'patient' });
       } catch (err) {
-        // Si falla, esperamos que sea por validación, usuario no existe, o error servidor
-        // Pero NO 404 de ruta no encontrada
+       
         expect(err.status).not.toBe(404);
       }
-      // Si no falla, la ruta existe (lo que queremos probar)
+      
     });
   });
 
