@@ -19,11 +19,11 @@ export const getAllAvailabilities = async (req, res) => {
     const availabilities = await AvailabilityModel.findAll({
       where: whereClause,
       include: [
-        // {
-        //   model: PsychologistModel,
-        //   as: 'psychologist',
-        //   attributes: ['user_id', 'name', 'email'],
-        // },
+        {
+            model: PsychologistModel,
+            as: 'psychologist',
+            attributes: ['user_id', 'name', 'email'],
+          },
       ],
       order: [['weekday', 'ASC'], ['start_time', 'ASC']],
     });
@@ -58,7 +58,7 @@ export const getAvailabilitiesByPsychologist = async (req, res) => {
 
 //crear bloque de disponibilidad (solo psicologo)
 export const createAvailability = async (req, res) => {
-  const transaction = await sequelize.transaction();
+    const transaction = await sequelize.transaction();
 
   try {
     const psychologist_id = req.user.id; // se obtiene desde el token
@@ -101,7 +101,7 @@ export const createAvailability = async (req, res) => {
       transaction,
     });
 
-    // Crear nuevas disponibilidades
+  // Crear nuevas disponibilidades
     const availabilitiesToCreate = availabilityData.map(item => ({
       psychologist_id,
       weekday: item.weekday,

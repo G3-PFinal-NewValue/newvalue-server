@@ -12,7 +12,7 @@ const startServer = async () => {
 
     // Sincroniza todos los modelos y crea tablas si no existen
     if (process.env.NODE_ENV === 'development') {
-    await sequelize.sync({alter: true});
+    await sequelize.sync({});
     console.log('✅ Database synchronized');
     }
 
