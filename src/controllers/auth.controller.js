@@ -3,6 +3,8 @@ import authService from "../services/auth.service.js";
 import UserModel from "../models/UserModel.js";
 import RoleModel from "../models/RoleModel.js";
 import { generateJWT } from "../utils/generateJWT.js";
+import transporter from "../config/nodemailer.js";
+
 
 // Login con Google
 export const googleLogin = async (req, res) => {
@@ -71,21 +73,12 @@ export const registerController = async (req, res) => {
       dni_nie_cif,
     } = req.body;
 
-    // Validar campos obligatorios
-    // if (!first_name || !last_name || !email || !password) {
-    //   return res.status(400).json({ message: 'Todos los campos son obligatorios' });
-    // }
-
-    // Verificar si el usuario ya existe
     const existingUser = await UserModel.findOne({ where: { email } });
     if (existingUser) {
       return res.status(400).json({ message: "El email ya está registrado" });
     }
 
-    // Establecer el rol por defecto si no se envía
     const roleName = role ? role.toLowerCase() : "patient";
-
-    // Buscar rol en la base de datos
     const roleRecord = await RoleModel.findOne({ where: { name: roleName } });
     if (!roleRecord) {
       return res
@@ -93,10 +86,8 @@ export const registerController = async (req, res) => {
         .json({ message: "Rol no válido o no encontrado." });
     }
 
-    // Hashear contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Crear usuario
     const newUser = await UserModel.create({
       first_name,
       last_name,
@@ -113,7 +104,25 @@ export const registerController = async (req, res) => {
       dni_nie_cif,
     });
 
-    // Generar token JWT
+    // === 📧 Enviar correo de bienvenida ===
+    await transporter.sendMail({
+      from: `"Cora Mind" <${process.env.SMTP_USER}>`,
+      to: newUser.email,
+      subject: "Bienvenida a Cora Mind",
+      html: `
+        <div style="background-color: #f4f1e8; font-family: 'Visby', system-ui, sans-serif; color: #333; padding: 30px 20px; font-size: 16px; line-height: 1.6;">
+          <div style="text-align: center; margin-bottom: 25px;">
+            <img src="https://res.cloudinary.com/dkm0ahny1/image/upload/v1762168143/coramind-logo-email_aiwngo.png" width="140" alt="Cora Mind Logo" />
+            <h2 style="color: #ee9271; margin: 10px 0;">Bienvenida, ${newUser.first_name}</h2>
+          </div>
+          <p>Tu cuenta ha sido creada correctamente en <strong>Cora Mind</strong>.</p>
+          <p>Ya puedes iniciar sesión con tu correo electrónico para acceder a tu área personal.</p>
+          <p>Gracias por confiar en nosotros.<br><strong>El equipo de Cora Mind</strong></p>
+        </div>
+      `,
+    });
+
+    // === 🔐 Generar token JWT ===
     const token = generateJWT({
       id: newUser.id,
       email: newUser.email,
