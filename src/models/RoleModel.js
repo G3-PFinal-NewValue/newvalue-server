@@ -17,7 +17,7 @@ const RoleModel = sequelize.define("role", {
   },
 }, {
   tableName: "role",
-  timestamps: false,  // Sin timestamps
+  timestamps: false,  
   underscored: true,
 });
 

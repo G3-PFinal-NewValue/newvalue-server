@@ -1,7 +1,7 @@
 
 const ownershipMiddleware = (req, res, next) => {
     const user = req.user; 
-    const resourceId = parseInt(req.params.id);
+    const resourceId = req.params.id ? parseInt(req.params.id) : user.id; 
 
     if (!user) {
         return res.status(401).json({ message: "No autenticado" });

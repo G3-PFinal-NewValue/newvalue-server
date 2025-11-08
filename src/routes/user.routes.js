@@ -1,21 +1,44 @@
 import express from 'express';
-import { assignRole, getAllUsers,deactivateUser, activateUser } from '../controllers/user.controller.js';
-import { createUserAndSendEmail } from '../controllers/firstSession.controller.js';
-//CA: Acá voy a importar los controladores y los middlewares que ya están definidos pero no importados. Arriba importé getAllUsers deactivateUser, activateUser
 import authMiddleware from '../middleware/authMiddleware.js';
 import roleMiddleware from '../middleware/roleMiddleware.js';
+import { createUserAndSendEmail } from '../controllers/firstSession.controller.js';
+import { getAllUsers, getUserById, createUser, updateUser, deactivateUser, activateUser, deleteUser, assignRole } from '../controllers/user.controller.js';
+import ownerMiddleware from '../middleware/ownerMiddleware.js';
 
 const userRouter = express.Router();
 
-// CA: Acá añado la ruta GET para que solo el admin pueda obtener todos los usuarios.
+// -----------------------
+// RUTAS PARA ADMIN
+// -----------------------
+
+// Ver todos los usuarios (solo admin)
 userRouter.get('/', authMiddleware, roleMiddleware('admin'), getAllUsers);
 
-userRouter.patch('/assign-role', assignRole);
+//ver un usuario por ID (admin)
+userRouter.get('/:id', authMiddleware, roleMiddleware('admin'), getUserById);
 
+//crear usuario (solo admin)
+//userRouter.post('/', authMiddleware, roleMiddleware('admin'), createUser);
 userRouter.post('/', createUserAndSendEmail);
 
-// CA: Acá añado las rutas para activar y desactivar usuarios
-userRouter.patch('/:id/deactivate', authMiddleware, roleMiddleware('admin'), deactivateUser);
+//activar usuario (solo admin)
 userRouter.patch('/:id/activate', authMiddleware, roleMiddleware('admin'), activateUser);
+
+//desactivar usuario (solo admin)
+userRouter.patch('/:id/deactivate', authMiddleware, roleMiddleware('admin'), deactivateUser);
+
+//eliminar usuario (solo admin)
+userRouter.delete('/:id', authMiddleware, roleMiddleware('admin'), deleteUser);
+
+//asignar rol a usuario (solo admin)
+userRouter.patch('/:id/assign-role', authMiddleware, roleMiddleware('admin'), assignRole);
+
+// -----------------------
+// RUTAS PARA USUARIO PROPIO
+// -----------------------
+
+// Actualizar propio usuario
+userRouter.put("/:id", authMiddleware, ownerMiddleware, updateUser);
+
 
 export default userRouter;
