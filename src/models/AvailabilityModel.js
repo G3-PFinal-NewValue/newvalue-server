@@ -37,7 +37,19 @@ const AvailabilityModel = sequelize.define('availability', {
   end_time: {
     type: DataTypes.TIME,
     allowNull: false,
+    validate:{
+      isAfterStart(value) {
+        if (this.start_time && value <= this.start_time) {
+          throw new Error('La hora de finalización debe ser posterior a la hora de inicio');
+        }
+      }
+    }
   },
+  status: {
+  type: DataTypes.ENUM('available', 'booked', 'unavailable'),
+  allowNull: false,
+  defaultValue: 'available',
+},
 }, {
   tableName: 'availability',
   timestamps: false,

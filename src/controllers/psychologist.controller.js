@@ -1,6 +1,7 @@
 import PsychologistModel from "../models/PsychologistModel.js";
 import cloudinary from "../utils/cloudinaryConfig.js";
 import SpecialityModel from "../models/SpecialityModel.js";
+import LanguageModel from "../models/LanguageModel.js";
 import fs from "fs";
 import { sequelize } from "../config/database.js";
 import UserModel from "../models/UserModel.js";
@@ -65,14 +66,18 @@ export const getPsychologistById = async (req, res) => {
           },
         },
         {
-          model: UserModel, // <-- Añade el modelo User
-          as: "user", // <-- Usa el alias que definimos
-          attributes: ["first_name", "last_name", "email", "avatar"], // Trae solo los datos necesarios
+          model: LanguageModel,
+          as: 'languages',
+          attributes: ['id', 'name'],
+          through: { attributes: [] }, 
+          model: UserModel, 
+          as: "user", 
+          attributes: ["first_name", "last_name", "email", "avatar"], 
         },
         {
-          model: AvailabilityModel, // <-- Añade el modelo Availability
-          as: "availabilities", // <-- Usa el alias que definimos
-          attributes: ["weekday", "start_time", "end_time"], // Trae los datos necesarios
+          model: AvailabilityModel, 
+          as: "availabilities", 
+          attributes: ["weekday", "start_time", "end_time"], 
         },
       ],
     });
@@ -416,3 +421,149 @@ export const getPsychologistBookedSlots = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+//PARA EL PSICOLOGO
+
+//Ver perfil propio
+export const getMyProfile = async (req, res) => {
+  try {
+    const psychologist = await PsychologistModel.findOne({
+      where: { user_id: req.user.id },
+      include: [
+        {
+          model: SpecialityModel,
+          as: 'specialities',
+          attributes: ['id', 'name'],
+          through: { attributes: [] },
+        },
+        {
+          model: LanguageModel,
+          as: 'languages',
+          attributes: ['id', 'name'],
+          through: { attributes: [] }, // oculta la tabla intermedia
+        },
+      ],
+    });
+
+    if (!psychologist) {
+      return res.status(404).json({ message: 'Perfil no encontrado' });
+    }
+
+    res.status(200).json(psychologist);
+  } catch (error) {
+    console.error('Error al obtener el perfil:', error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+//Actualizar perfil propio
+export const updateMyProfile = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const user_id = req.user.id;
+    const { license_number, specialities, professional_description, photo, languages } = req.body;
+
+    const profile = await PsychologistModel.findOne({
+      where: { user_id },
+      include: [{ association: 'languages' }, { association: 'specialities' }],
+        transaction
+    });
+
+    if (!profile) {
+      await transaction.rollback();
+      return res.status(404).json({ message: 'Perfil no encontrado' });
+    }
+
+    //Subir nueva foto si viene un archivo
+    if (req.file) {
+      if (profile.photo_public_id) {
+        await cloudinary.uploader.destroy(profile.photo_public_id);
+      }
+      const result = await cloudinary.uploader.upload(req.file.path, { folder: 'psychologists' });
+      profile.photo = result.secure_url;
+      profile.photo_public_id = result.public_id;
+      fs.unlinkSync(req.file.path);
+    } else if (photo) {
+      //si manda directamente una url
+      profile.photo = photo;
+    }
+
+    //Actualizar campos básicos
+    if (license_number) profile.license_number = license_number;
+    if (professional_description) profile.professional_description = professional_description;
+
+    //Actualizar especialidades
+    if (specialities) {
+      const specialityArray = Array.isArray(specialities)
+        ? specialities
+        : JSON.parse(specialities);
+
+      const specialityInstances = await Promise.all(
+        specialityArray.map(async (item) => {
+          if (!item) return null;
+          if (!isNaN(item)) {
+            return SpecialityModel.findByPk(item);
+          } else {
+            const [speciality] = await SpecialityModel.findOrCreate({
+              where: { name: item.trim() },
+            });
+            return speciality;
+          }
+        })
+      )
+      await profile.setSpecialities(specialityInstances.filter(Boolean));
+    }
+
+    // Actualizar idiomas (si se envía el campo)
+    if (languages) {
+      const languageArray = Array.isArray(languages)
+        ? languages
+        : JSON.parse(languages);
+
+      const languageInstances = await Promise.all(
+        languageArray.map(async (item) => {
+          if (!item) return null;
+          if (!isNaN(item)) {
+            // si es id
+            return LanguageModel.findByPk(item);
+          } else {
+            // si es nombre nuevo
+            const [language] = await LanguageModel.findOrCreate({
+              where: { name: item.trim() },
+              defaults: {code: null},
+              transaction,
+            });
+            return language;
+          }
+        })
+      );
+      await profile.setLanguages(languageInstances.filter(Boolean));
+    }
+
+    await profile.save({ transaction });
+    await transaction.commit();
+
+    const updatedProfile = await PsychologistModel.findOne({
+      where: { user_id },
+      include: [
+        {
+          model: SpecialityModel,
+          as: 'specialities',
+          attributes: ['id', 'name'],
+          through: { attributes: [] },
+        },
+        {
+          model: LanguageModel,
+          as: 'languages',
+          attributes: ['id', 'name'],
+          through: { attributes: [] },
+        },
+      ],
+    });
+    res.status(200).json({ message: 'Perfil actualizado correctamente', profile: updatedProfile });
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error al actualizar perfil', error);
+    res.status(400).json({ message: error.message });
+  }
+}
