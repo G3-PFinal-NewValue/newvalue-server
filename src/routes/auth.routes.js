@@ -12,8 +12,40 @@ authRouter.post('/google', googleLogin);
 // TODO: confirmar si esta ruta debe usarse y ajustar la URL según el brief.
 authRouter.post('/google/callback', googleLogin);
 
-authRouter.post('/register',registerValidator, handleValidationErrors, registerController);
+authRouter.post('/register', registerValidator, handleValidationErrors, registerController);
 authRouter.post('/login', loginValidator, handleValidationErrors, loginController);
 
+//si el admin creo al usuario y este va a establecer su contraseña
+authRouter.post('/set-password/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        // Buscar usuario con token válido
+        const user = await User.findOne({
+            where: {
+                user_password_token: token,
+                user_password_token_expiration: { [Op.gt]: new Date() }
+            }
+        });
+
+        if (!user) return res.status(400).json({ message: 'Token inválido o expirado' });
+
+        // Hashear y guardar contraseña
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user.password = hashedPassword;
+
+        // Limpiar token
+        user.user_password_token = null;
+        user.user_password_token_expiration = null;
+
+        await user.save();
+
+        res.json({ message: 'Contraseña establecida correctamente' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error estableciendo contraseña' });
+    }
+});
 
 export default authRouter;

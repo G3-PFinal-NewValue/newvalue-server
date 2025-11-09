@@ -61,8 +61,7 @@ export const getUserById = async (req, res) => {
     }
 };
 
-
-export const createUser = async (req, res) => {
+export const adminCreateUser = async (req, res) => {
     try {
         const {
             email,
@@ -75,14 +74,26 @@ export const createUser = async (req, res) => {
             city,
             country,
             dni_nie_cif,
-            roleName
+            roleName,
+            role_id
         } = req.body;
 
-        // Validación de campos obligatorios
+        // Validar campos obligatorios
         if (!email || !first_name || !last_name || !phone || !postal_code || !province || !full_address || !city || !country || !dni_nie_cif) {
             return res.status(400).json({ message: "Todos los campos obligatorios deben estar completos" });
         }
 
+        // Determinar el rol final
+        let finalRoleId = role_id;
+
+        if (!finalRoleId) {
+            const role = await RoleModel.findOne({
+                where: { name: roleName || "patient" }
+            });
+            finalRoleId = role ? role.id : 3; // si no encuentra, usa paciente
+        }
+
+        // Crear usuario
         const newUser = await UserModel.create({
             email,
             first_name,
@@ -94,20 +105,28 @@ export const createUser = async (req, res) => {
             city,
             country,
             dni_nie_cif,
-            role_id: 3 // paciente por defecto
+            role_id: finalRoleId
         });
+        // Generar token de registro
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiration = new Date();
+        expiration.setHours(expiration.getHours() + 24); // token válido 24h
 
-        // Asignar rol
-        const role = await RoleModel.findOne({ where: { name: roleName || "patient" } });
-        newUser.role_id = role.id;
-        await newUser.save();
+        user.user_password_token = token;
+        user.user_password_token_expiration = expiration;
+        await user.save();
 
-        res.status(201).json({ message: "Usuario creado correctamente", user: newUser, role: role.name });
+        // Enviar email
+        await sendPasswordSetupEmail(user.email, token);
+
+        return res.status(201).json({ message: 'Usuario creado. Email enviado para establecer contraseña.' });
+
     } catch (error) {
         console.error("Error al crear usuario:", error);
         res.status(400).json({ message: error.message });
     }
 };
+
 
 //actualizar usuario (admin o propio usuario)
 export const updateUser = async (req, res) => {
@@ -212,7 +231,7 @@ export const assignRole = async (req, res) => {
             role: user.role.name,
         });
 
-        res.status(200).json({
+        return res.status(200).json({
             message: "Rol asignado correctamente",
             user: {
                 id: user.id,
@@ -223,9 +242,6 @@ export const assignRole = async (req, res) => {
             },
             token,
         })
-
-        console.log('12. Enviando respuesta completa:', response);
-        res.status(200).json(response);
 
     } catch (error) {
         console.error("Error al asignar rol:", error);

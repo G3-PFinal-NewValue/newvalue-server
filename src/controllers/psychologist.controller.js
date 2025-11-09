@@ -28,7 +28,7 @@ export const getAllPsychologists = async (req, res) => {
       {
         model: UserModel,
         as: 'user', // Usamos el alias de la asociación
-        attributes: ['first_name', 'last_name', 'avatar'] // Traemos solo lo necesario
+        attributes: ['first_name', 'last_name'] // Traemos solo lo necesario
       }
     ];
 
@@ -72,7 +72,7 @@ export const getPsychologistById = async (req, res) => {
           through: { attributes: [] }, 
           model: UserModel, 
           as: "user", 
-          attributes: ["first_name", "last_name", "email", "avatar"], 
+          attributes: ["first_name", "last_name", "email"], 
         },
         {
           model: AvailabilityModel, 
