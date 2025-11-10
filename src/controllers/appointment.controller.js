@@ -3,6 +3,12 @@ import UserModel from '../models/UserModel.js';
 import AvailabilityModel from '../models/AvailabilityModel.js';
 import SessionModel from '../models/SessionModel.js';
 import {sequelize} from "../config/database.js";
+import { Op } from 'sequelize';
+
+const parseTimeString = (timeStr = "00:00") => {
+  const [hours, minutes] = (timeStr ?? "00:00").split(":").map(Number);
+  return { hours: hours || 0, minutes: minutes || 0 };
+};
 
 // -------------------------
 // CONTROLADOR DE APPOINTMENTS
@@ -120,51 +126,112 @@ export const createAppointment = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
     const patient_id = req.user.id;
-    const { availability_id , psychologist_id, session_link, duration_minutes, notes } = req.body;
+    const {
+      availability_id,
+      psychologist_id,
+      date,
+      session_link,
+      duration_minutes,
+      notes,
+    } = req.body;
 
-    //Validaciones Basicas
-    if (!availability_id || !psychologist_id) {
+    const duration = Number(duration_minutes) || 45;
+
+    if (!availability_id || !psychologist_id || !date) {
       await transaction.rollback();
       return res.status(400).json({ message: "Faltan datos obligatorios" });
     }
 
-    // Validar la disponibilidad seleccionada
-    const availability = await AvailabilityModel.findByPk(availability_id, { transaction });
+    const availability = await AvailabilityModel.findByPk(availability_id, {
+      transaction,
+    });
     if (!availability) {
       await transaction.rollback();
-      return res.status(400).json({ message: 'La disponibilidad seleccionada no existe.'});
+      return res
+        .status(400)
+        .json({ message: "La disponibilidad seleccionada no existe." });
     }
 
-    if(availability.psychologist_id !== psychologist_id){
+    if (availability.psychologist_id !== Number(psychologist_id)) {
       await transaction.rollback();
-      return res.status(400).json({message: 'La disponibilidad no pertenece al psicologo seleccionado.'})
+      return res.status(400).json({
+        message: "La disponibilidad no pertenece al psicólogo seleccionado.",
+      });
     }
 
-    //verificar que la disponibilidad no este ocupada
-    if (availability.status !=='available'){
+    const slotStart = new Date(date);
+    if (isNaN(slotStart.getTime())) {
       await transaction.rollback();
-      return res.status(400).json({message: 'La disponibilidad seleccionada ya esta ocupada.'})
+      return res
+        .status(400)
+        .json({ message: "La fecha de la cita no es válida." });
+    }
+    const slotEnd = new Date(slotStart.getTime() + duration * 60000);
+
+    const availabilityDate = availability.specific_date
+      ? new Date(`${availability.specific_date}T00:00:00`)
+      : slotStart;
+
+    const { hours: availStartHour, minutes: availStartMinute } = parseTimeString(
+      availability.start_time
+    );
+    const { hours: availEndHour, minutes: availEndMinute } = parseTimeString(
+      availability.end_time
+    );
+
+    const availabilityStart = new Date(availabilityDate);
+    availabilityStart.setHours(availStartHour, availStartMinute, 0, 0);
+    const availabilityEnd = new Date(availabilityDate);
+    availabilityEnd.setHours(availEndHour, availEndMinute, 0, 0);
+
+    if (slotStart < availabilityStart || slotEnd > availabilityEnd) {
+      await transaction.rollback();
+      return res.status(400).json({
+        message: "La cita seleccionada está fuera del horario disponible.",
+      });
     }
 
-    //Crear la cita
-    const newAppointment = await AppointmentModel.create({
-      patient_id,
-      psychologist_id,
-      date: availability.weekday,
-      start_time: availability.start_time,
-      end_time: availability.end_time,
-      status: 'pending',
-      session_link: session_link || null,
-      duration_minutes: duration_minutes || 60,
-      notes: notes || '',
-    }, { transaction });
+    const existingAppointments = await AppointmentModel.findAll({
+      where: {
+        availability_id,
+        status: { [Op.in]: ["pending", "confirmed"] },
+      },
+      transaction,
+    });
 
-    //marcar la disponibilidad como ocupada
-    availability.status = 'booked';
-    await availability.save({ transaction });
+    const overlaps = existingAppointments.some((appointment) => {
+      const existingStart = new Date(appointment.date);
+      const existingEnd = new Date(
+        existingStart.getTime() + (appointment.duration_minutes || 45) * 60000
+      );
+      return slotStart < existingEnd && slotEnd > existingStart;
+    });
+
+    if (overlaps) {
+      await transaction.rollback();
+      return res.status(400).json({
+        message: "La disponibilidad seleccionada ya está ocupada.",
+      });
+    }
+
+    const newAppointment = await AppointmentModel.create(
+      {
+        patient_id,
+        psychologist_id,
+        availability_id,
+        date: slotStart,
+        duration_minutes: duration,
+        status: "pending",
+        session_link: session_link || null,
+        notes: notes || "",
+      },
+      { transaction }
+    );
 
     await transaction.commit();
-    res.status(201).json({message: 'Cita creada correctamente', appointment:newAppointment});
+    res
+      .status(201)
+      .json({ message: "Cita creada correctamente", appointment: newAppointment });
   } catch (error) {
     await transaction.rollback();
     console.error("Error al crear cita:", error);
@@ -179,7 +246,14 @@ export const updateAppointment = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
     const { id } = req.params;
-    const { status, session_link, notes } = req.body;
+    const {
+      status,
+      session_link,
+      notes,
+      availability_id,
+      date,
+      duration_minutes,
+    } = req.body;
 
     const appointment = await AppointmentModel.findByPk(id, { transaction });
     if (!appointment) {
@@ -187,26 +261,111 @@ export const updateAppointment = async (req, res) => {
       return res.status(404).json({ message: "Cita no encontrada" });
     }
 
-    //Validar permisos
     if (
       req.user.role !== "admin" &&
       req.user.id !== appointment.patient_id &&
       req.user.id !== appointment.psychologist_id
     ) {
       await transaction.rollback();
-      return res.status(403).json({message: 'No tienes permiso para editar esta cita.'})
+      return res
+        .status(403)
+        .json({ message: "No tienes permiso para editar esta cita." });
     }
 
-    // Si la cita se cancela, liberar disponibilidad
-    if (status && status === 'cancelled' && appointment.availability_id) {
-      const availability = await AvailabilityModel.findByPk(appointment.availability_id, { transaction });
-      if (availability && availability.status === 'booked') {
-        availability.status = 'available';
-        await availability.save({ transaction });
+    const wantsReschedule =
+      availability_id || date || duration_minutes !== undefined;
+
+    if (wantsReschedule) {
+      if (!availability_id || !date) {
+        await transaction.rollback();
+        return res.status(400).json({
+          message:
+            "Para reprogramar necesitas enviar availability_id y la nueva fecha.",
+        });
       }
+
+      const newAvailability = await AvailabilityModel.findByPk(
+        availability_id,
+        { transaction }
+      );
+
+      if (!newAvailability) {
+        await transaction.rollback();
+        return res
+          .status(400)
+          .json({ message: "La disponibilidad seleccionada no existe." });
+      }
+
+      if (newAvailability.psychologist_id !== appointment.psychologist_id) {
+        await transaction.rollback();
+        return res.status(400).json({
+          message: "La disponibilidad no pertenece a tu psicólogo.",
+        });
+      }
+
+      const slotStart = new Date(date);
+      if (isNaN(slotStart.getTime())) {
+        await transaction.rollback();
+        return res
+          .status(400)
+          .json({ message: "La fecha proporcionada no es válida." });
+      }
+
+      const duration = Number(duration_minutes) || appointment.duration_minutes || 45;
+      const slotEnd = new Date(slotStart.getTime() + duration * 60000);
+
+      const availabilityDate = newAvailability.specific_date
+        ? new Date(`${newAvailability.specific_date}T00:00:00`)
+        : slotStart;
+
+      const { hours: availStartHour, minutes: availStartMinute } =
+        parseTimeString(newAvailability.start_time);
+      const { hours: availEndHour, minutes: availEndMinute } = parseTimeString(
+        newAvailability.end_time
+      );
+
+      const availabilityStart = new Date(availabilityDate);
+      availabilityStart.setHours(availStartHour, availStartMinute, 0, 0);
+      const availabilityEnd = new Date(availabilityDate);
+      availabilityEnd.setHours(availEndHour, availEndMinute, 0, 0);
+
+      if (slotStart < availabilityStart || slotEnd > availabilityEnd) {
+        await transaction.rollback();
+        return res.status(400).json({
+          message: "La nueva cita está fuera del horario disponible.",
+        });
+      }
+
+      const overlapping = await AppointmentModel.findAll({
+        where: {
+          availability_id,
+          id: { [Op.ne]: appointment.id },
+          status: { [Op.in]: ["pending", "confirmed"] },
+        },
+        transaction,
+      });
+
+      const hasConflict = overlapping.some((app) => {
+        const existingStart = new Date(app.date);
+        const existingEnd = new Date(
+          existingStart.getTime() + (app.duration_minutes || 45) * 60000
+        );
+        return slotStart < existingEnd && slotEnd > existingStart;
+      });
+
+      if (hasConflict) {
+        await transaction.rollback();
+        return res
+          .status(400)
+          .json({ message: "La disponibilidad seleccionada ya está ocupada." });
+      }
+
+      appointment.availability_id = availability_id;
+      appointment.date = slotStart;
+      appointment.duration_minutes = duration;
+      appointment.status = "pending";
     }
 
-    //solo permitimos actualizar datos seguros
     if (status) appointment.status = status;
     if (session_link) appointment.session_link = session_link;
     if (notes) appointment.notes = notes;

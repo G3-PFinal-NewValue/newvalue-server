@@ -22,11 +22,16 @@ const AvailabilityModel = sequelize.define('availability', {
 
   weekday: {
     type: DataTypes.SMALLINT,
-    allowNull: false,
-    validate: {
-      min: 1,
-      max: 7,
+    allowNull: true, // CA: permitir nulo para compatibilidad con fechas específicas
+    validate: { // CA: mantener validación cuando exista
+      min: 1, // CA: mínimo lunes
+      max: 7, // CA: máximo domingo
     },
+  },
+
+  specific_date: {
+    type: DataTypes.DATEONLY, // CA: almacenar la fecha exacta seleccionada
+    allowNull: false, // CA: los bloques ahora son por día específico
   },
 
   start_time: {
@@ -46,10 +51,19 @@ const AvailabilityModel = sequelize.define('availability', {
     }
   },
   status: {
-  type: DataTypes.ENUM('available', 'booked', 'unavailable'),
-  allowNull: false,
-  defaultValue: 'available',
-},
+    type: DataTypes.ENUM('available', 'booked', 'unavailable'),
+    allowNull: false,
+    defaultValue: 'available',
+  },
+  is_available: {
+    type: DataTypes.BOOLEAN, // CA: bandera directa para UI
+    allowNull: false, // CA: evitar valores indefinidos
+    defaultValue: true, // CA: por defecto disponible
+  },
+  notes: {
+    type: DataTypes.TEXT, // CA: guardar notas opcionales
+    allowNull: true, // CA: campo libre
+  },
 }, {
   tableName: 'availability',
   timestamps: false,

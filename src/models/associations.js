@@ -118,9 +118,11 @@ PsychologistModel.hasMany(AppointmentModel, {
   as: "appointments",
   onDelete: "CASCADE",
 });
-AppointmentModel.belongsTo(PsychologistModel, {
-  foreignKey: "psychologist_id",
-  as: "psychologist",
+AppointmentModel.belongsTo(UserModel, {
+  foreignKey: "psychologist_id", // CA: usar relación directa con user para psicólogo
+  as: "psychologist", // CA: alias coincide con lo utilizado en los includes
+  onDelete: "CASCADE", // CA: mantener reglas de cascada al alinear con usuarios
+  onUpdate: "CASCADE", // CA: asegurar consistencia en actualizaciones
 });
 
 UserModel.hasMany(AppointmentModel, {
@@ -133,6 +135,16 @@ AppointmentModel.belongsTo(UserModel, {
   as: "patient",
 });
 
+AppointmentModel.hasMany(SessionModel, { // CA: vincular citas con sesiones para habilitar include
+  foreignKey: "appointment_id", // CA: usar la FK existente en session
+  as: "sessions", // CA: alias requerido por los controladores
+  onDelete: "CASCADE", // CA: limpiar sesiones al eliminar la cita
+  onUpdate: "CASCADE", // CA: mantener integridad en updates
+});
+SessionModel.belongsTo(AppointmentModel, { // CA: asegurar referencia inversa con alias útil
+  foreignKey: "appointment_id", // CA: misma FK de la relación
+  as: "appointment", // CA: alias descriptivo para lecturas de sesión
+});
 
 PsychologistModel.belongsToMany(LanguageModel, {
   through: 'psychologist_languages',
