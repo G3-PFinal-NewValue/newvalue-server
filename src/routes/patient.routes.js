@@ -23,8 +23,8 @@ const patientRouter = express.Router();
 // Configuración de Multer
 const upload = multer({ dest: 'uploads/' }); // carpeta temporal
 
-// Solo admin puede ver todos los pacientes
-patientRouter.get("/", authMiddleware, roleMiddleware("admin"), getAllPatients);
+// CA: el controlador decide qué ve cada rol (admin vs psicólogo)
+patientRouter.get("/", authMiddleware, getAllPatients);
 
 // Cualquier usuario puede registrarse como paciente (con foto opcional)
 patientRouter.post("/", authMiddleware, upload.single('photo'), createPatient);
@@ -33,8 +33,13 @@ patientRouter.post("/", authMiddleware, upload.single('photo'), createPatient);
 patientRouter.get("/profile", authMiddleware, getMyProfile);
 patientRouter.put("/profile", authMiddleware, upload.single('photo'), updateMyProfile);
 
-// Admin o el propio usuario pueden ver/editar/desactivar/eliminar su cuenta
-patientRouter.get("/:id", authMiddleware, ownerMiddleware, getPatientById);
+// Admin, el propio usuario o el psicólogo de la cita pueden ver el perfil
+patientRouter.get(
+  "/:id",
+  authMiddleware,
+  ownerMiddleware,
+  getPatientById
+);
 patientRouter.put("/:id", authMiddleware, ownerMiddleware, upload.single('photo'), updatePatient);
 patientRouter.patch("/:id/deactivate", authMiddleware, ownerMiddleware, deactivatePatient);
 patientRouter.delete("/:id", authMiddleware, ownerMiddleware, deletePatient);
