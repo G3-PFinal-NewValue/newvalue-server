@@ -1,8 +1,8 @@
 import UserModel from "../models/UserModel.js";
 import RoleModel from "../models/RoleModel.js";
 import { generateJWT } from "../utils/generateJWT.js";
-
-
+import crypto from "crypto";
+import { sendPasswordSetupEmail } from "../utils/emailService.js";
 
 // =========================
 // CONTROLADOR DE USUARIOS
@@ -75,25 +75,38 @@ export const adminCreateUser = async (req, res) => {
             country,
             dni_nie_cif,
             roleName,
-            role_id
+            role_id,
         } = req.body;
 
-        // Validar campos obligatorios
-        if (!email || !first_name || !last_name || !phone || !postal_code || !province || !full_address || !city || !country || !dni_nie_cif) {
-            return res.status(400).json({ message: "Todos los campos obligatorios deben estar completos" });
+        // 🔹 Validar campos obligatorios
+        if (
+            !email ||
+            !first_name ||
+            !last_name ||
+            !phone ||
+            !postal_code ||
+            !province ||
+            !full_address ||
+            !city ||
+            !country ||
+            !dni_nie_cif
+        ) {
+            return res
+                .status(400)
+                .json({ message: "Todos los campos obligatorios deben estar completos" });
         }
 
-        // Determinar el rol final
+        // 🔹 Determinar el rol final
         let finalRoleId = role_id;
 
         if (!finalRoleId) {
             const role = await RoleModel.findOne({
-                where: { name: roleName || "patient" }
+                where: { name: roleName || "patient" },
             });
             finalRoleId = role ? role.id : 3; // si no encuentra, usa paciente
         }
 
-        // Crear usuario
+        // 🔹 Crear usuario
         const newUser = await UserModel.create({
             email,
             first_name,
@@ -105,22 +118,27 @@ export const adminCreateUser = async (req, res) => {
             city,
             country,
             dni_nie_cif,
-            role_id: finalRoleId
+            role_id: finalRoleId,
         });
-        // Generar token de registro
-        const token = crypto.randomBytes(32).toString('hex');
+
+        // 🔹 Generar token y guardar
+        const token = crypto.randomBytes(32).toString("hex");
         const expiration = new Date();
-        expiration.setHours(expiration.getHours() + 24); // token válido 24h
+        expiration.setHours(expiration.getHours() + 24); // válido 24 horas
 
-        user.user_password_token = token;
-        user.user_password_token_expiration = expiration;
-        await user.save();
+        newUser.user_password_token = token;
+        newUser.user_password_token_expiration = expiration;
+        await newUser.save();
 
-        // Enviar email
-        await sendPasswordSetupEmail(user.email, token);
+        // 🔹 Enviar email con el token
+        await sendPasswordSetupEmail(newUser.email, token);
 
-        return res.status(201).json({ message: 'Usuario creado. Email enviado para establecer contraseña.' });
-
+        return res
+            .status(201)
+            .json({
+                message: "Usuario creado correctamente. Email enviado para establecer contraseña.",
+                user: newUser,
+            });
     } catch (error) {
         console.error("Error al crear usuario:", error);
         res.status(400).json({ message: error.message });

@@ -1,7 +1,11 @@
 import express from 'express';
-import { registerController, loginController, googleLogin } from '../controllers/auth.controller.js';
+import { registerController, loginController, googleLogin, setPassword } from '../controllers/auth.controller.js';
 import { registerValidator, loginValidator } from '../validators/authValidator.js';
 import { handleValidationErrors } from '../middleware/validationResultHandler.js';
+import UserModel from '../models/UserModel.js';
+import { Op } from 'sequelize';
+import bcrypt from 'bcrypt';
+
 
 const authRouter = express.Router();
 // Ruta para iniciar sesión con Google. El cliente envía el token
@@ -16,13 +20,13 @@ authRouter.post('/register', registerValidator, handleValidationErrors, register
 authRouter.post('/login', loginValidator, handleValidationErrors, loginController);
 
 //si el admin creo al usuario y este va a establecer su contraseña
-authRouter.post('/set-password/:token', async (req, res) => {
+authRouter.post('/set-password/:token', setPassword, async (req, res) => {
     try {
         const { token } = req.params;
         const { password } = req.body;
 
         // Buscar usuario con token válido
-        const user = await User.findOne({
+        const user = await UserModel.findOne({
             where: {
                 user_password_token: token,
                 user_password_token_expiration: { [Op.gt]: new Date() }

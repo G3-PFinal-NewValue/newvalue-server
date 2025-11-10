@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 
 export async function sendPasswordSetupEmail(to, token) {
     const transporter = nodemailer.createTransport({
-        host: 'smtp.tu-email.com',
+        host: 'smtp.gmail.com',
         port: 587,
         auth: {
             user: process.env.SMTP_USER,
