@@ -4,18 +4,26 @@ import 'dotenv/config';
 // --- Configuración de la API REST de CometChat ---
 const APP_ID = process.env.COMETCHAT_APP_ID;
 const REGION = process.env.COMETCHAT_REGION;
-const AUTH_KEY = process.env.COMETCHAT_AUTH_KEY;
+const REST_API_KEY =
+  process.env.COMETCHAT_REST_API_KEY || process.env.COMETCHAT_AUTH_KEY;
 
 // v3 es la versión que coincide con los paquetes de frontend @cometchat-pro/chat
 const API_BASE_URL = `https://api-${REGION}.cometchat.io/v3`;
 
 // Creamos una instancia de axios pre-configurada para la API de CometChat
+if (!APP_ID || !REGION || !REST_API_KEY) {
+  console.warn(
+    '⚠️ Faltan variables de entorno de CometChat (APP_ID, REGION o REST_API_KEY). Verifica tu archivo .env'
+  );
+}
+
 const cometchatApi = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'apiKey': AUTH_KEY // Así autenticamos nuestro servidor
+    'apiKey': REST_API_KEY, // REST API key de CometChat
+    'appId': APP_ID,
   }
 });
 // --- Fin de la Configuración ---
@@ -33,15 +41,15 @@ export const getCometChatToken = async (req, res) => {
     const userName = req.user.name || `${req.user.firstName} ${req.user.lastName}` || `Usuario ${userId}`;
 
     // 2. Intentar crear el usuario en CometChat
-    try {
+try {
       await cometchatApi.post('/users', {
         uid: userId,
         name: userName,
       });
       console.log('Usuario creado en CometChat:', userId);
     } catch (error) {
-      // Si el error es 'UID_ALREADY_EXISTS', está bien, significa que ya existe
-      if (error.response && error.response.data?.error?.code === 'UID_ALREADY_EXISTS') {
+      // Si el error es 'ERR_UID_ALREADY_EXISTS', está bien, significa que ya existe
+      if (error.response && error.response.data?.error?.code === 'ERR_UID_ALREADY_EXISTS') { // <-- ESTA LÍNEA ES LA CORRECTA
         console.log('Usuario ya existe en CometChat:', userId);
       } else {
         // Otro error (ej. 401 Unauthenticated)
