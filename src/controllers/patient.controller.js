@@ -103,15 +103,17 @@ export const createPatient = async (req, res) => {
 // Actualizar paciente
 export const updatePatient = async (req, res) => {
     try {
+        const { id } = req.params;
+
         const [rowsUpdated] = await PatientModel.update(req.body, {
-            where: { user_id: req.params.id},
+            where: { user_id: id },
         });
 
         if (rowsUpdated === 0) {
             return res.status(404).json({ message: 'Paciente no encontrado' });
         }
 
-        const updatedPatient = await PatientModel.findOne({ where: { user_id } });
+        const updatedPatient = await PatientModel.findOne({ where: { user_id: id } });
         res.status(200).json({ message: 'Paciente actualizado', patient: updatedPatient });
     } catch (error) {
         console.error('Error al actualizar el paciente:', error);
