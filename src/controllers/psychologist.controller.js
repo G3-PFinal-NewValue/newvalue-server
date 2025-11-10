@@ -9,6 +9,41 @@ import AvailabilityModel from "../models/AvailabilityModel.js";
 import AppointmentModel from "../models/AppointmentModel.js";
 import { Op } from "sequelize";
 
+const deriveWeekdayFromDate = (dateString) => { // CA: helper para mantener el campo weekday aún con fechas específicas
+  if (!dateString) return null; // CA: sin fecha no calculamos
+  const jsDay = new Date(dateString).getDay(); // CA: 0-domingo a 6-sábado
+  return jsDay === 0 ? 7 : jsDay; // CA: convertir a rango 1-7
+};
+
+const buildAvailabilityRecords = (slots, psychologistId) => { // CA: normalizar payload de calendario al formato de BD
+  return slots
+    .map((slot) => { // CA: recorrer cada disponibilidad
+      const specificDate = slot.specific_date || null; // CA: fecha requerida por evento
+      if (
+        !specificDate || // CA: saltar si falta fecha
+        !slot.start_time || // CA: validar hora inicio
+        !slot.end_time // CA: validar hora fin
+      ) {
+        return null; // CA: descartamos registros incompletos
+      }
+
+      const isAvailable =
+        slot.is_available !== undefined ? slot.is_available : true; // CA: default true
+
+      return {
+        psychologist_id: psychologistId, // CA: FK del profesional
+        specific_date: specificDate, // CA: guardar fecha exacta
+        weekday: slot.weekday ?? deriveWeekdayFromDate(specificDate), // CA: conservar weekday para compatibilidad
+        start_time: slot.start_time, // CA: hora de inicio
+        end_time: slot.end_time, // CA: hora de fin
+        is_available: isAvailable, // CA: bandera directa
+        status: isAvailable ? "available" : "unavailable", // CA: sincronizar enum existente
+        notes: slot.notes || null, // CA: notas opcionales
+      };
+    })
+    .filter(Boolean); // CA: eliminar entradas inválidas
+};
+
 // Obtener todos los psicólogos (activos y validados)
 export const getAllPsychologists = async (req, res) => {
   try {
@@ -79,7 +114,7 @@ export const getPsychologistById = async (req, res) => {
         {
           model: AvailabilityModel, // CA: mantener disponibilidades en bloque independiente
           as: "availabilities", // CA: alias correcto para disponibilidades
-          attributes: ["weekday", "start_time", "end_time"], // CA: limitar atributos de disponibilidad
+          attributes: ["weekday", "specific_date", "start_time", "end_time", "is_available", "status", "notes"], // CA: exponer datos completos del calendario
         },
       ],
     });
@@ -169,16 +204,12 @@ await newProfile.setSpecialities(specialityInstances.filter(Boolean), { transact
 
     // CA: lógica de las disponibilidades
     if (availabilities) {
-      const availabilityArray = JSON.parse(availabilities);
-      if (Array.isArray(availabilityArray) && availabilityArray.length > 0) {
-        
-        const availData = availabilityArray.map(a => ({
-          psychologist_id: user_id,
-          weekday: a.weekday,
-          start_time: a.start_time,
-          end_time: a.end_time
-        }));
-        await AvailabilityModel.bulkCreate(availData, { transaction: t });
+      const availabilityArray = JSON.parse(availabilities); // CA: parsear payload del calendario
+      if (Array.isArray(availabilityArray) && availabilityArray.length > 0) { // CA: validar contenido
+        const availData = buildAvailabilityRecords(availabilityArray, user_id); // CA: normalizar estructura
+        if (availData.length > 0) { // CA: solo insertar si hay registros válidos
+          await AvailabilityModel.bulkCreate(availData, { transaction: t }); // CA: crear disponibilidades con fechas exactas
+        }
       }
     }
     await t.commit();
@@ -193,7 +224,7 @@ await newProfile.setSpecialities(specialityInstances.filter(Boolean), { transact
           attributes: ["id", "name"],
           through: { attributes: [] },
         },
-        { model: AvailabilityModel, as: 'availabilities', attributes: ['weekday', 'start_time', 'end_time'] }
+        { model: AvailabilityModel, as: 'availabilities', attributes: ['weekday', 'specific_date', 'start_time', 'end_time', 'is_available', 'status', 'notes'] } // CA: devolver info completa del calendario
       ]
       }
     );
@@ -279,17 +310,12 @@ export const updatePsychologistProfile = async (req, res) => {
       });
 
       // 4b. Crear las nuevas disponibilidades
-      const availabilityArray = JSON.parse(availabilities);
-      if (Array.isArray(availabilityArray) && availabilityArray.length > 0) {
-        
-        const availData = availabilityArray.map(a => ({
-          psychologist_id: id,
-          weekday: a.weekday,
-          start_time: a.start_time,
-          end_time: a.end_time
-        }));
-
-        await AvailabilityModel.bulkCreate(availData, { transaction: t });
+      const availabilityArray = JSON.parse(availabilities); // CA: payload proveniente del calendario
+      if (Array.isArray(availabilityArray) && availabilityArray.length > 0) { // CA: validar contenido
+        const availData = buildAvailabilityRecords(availabilityArray, id); // CA: normalizar campos (specific_date, status, etc.)
+        if (availData.length > 0) { // CA: insertar solo si existen registros válidos
+          await AvailabilityModel.bulkCreate(availData, { transaction: t }); // CA: recrear disponibilidades
+        }
       }
     }
 
@@ -297,12 +323,19 @@ export const updatePsychologistProfile = async (req, res) => {
     await t.commit(); 
 
     const updatedProfile = await PsychologistModel.findByPk(id, {
-      include: {
-        model: SpecialityModel,
-        as: "specialities",
-        attributes: ["id", "name"],
-        through: { attributes: [] },
-      },
+      include: [
+        {
+          model: SpecialityModel, // CA: devolver especialidades actualizadas
+          as: "specialities",
+          attributes: ["id", "name"],
+          through: { attributes: [] },
+        },
+        {
+          model: AvailabilityModel, // CA: incluir nuevas disponibilidades en la respuesta
+          as: "availabilities",
+          attributes: ["weekday", "specific_date", "start_time", "end_time", "is_available", "status", "notes"],
+        },
+      ],
     });
 
     res.status(200).json({
