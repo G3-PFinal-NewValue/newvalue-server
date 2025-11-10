@@ -3,6 +3,8 @@ import RoleModel from "../models/RoleModel.js";
 import { generateJWT } from "../utils/generateJWT.js";
 import crypto from "crypto";
 import { sendPasswordSetupEmail } from "../utils/emailService.js";
+import { Op } from "sequelize";
+
 
 // =========================
 // CONTROLADOR DE USUARIOS
@@ -23,9 +25,9 @@ export const getAllUsers = async (req, res) => {
         //Busqueda por nombre o email
         if(search){
             whereClause[Op.or] = [
-                { first_name: { [Op.iLike]: `%${search}%` } },
-                { last_name: { [Op.iLike]: `%${search}%` } },
-                { email: { [Op.iLike]: `%${search}%` } },
+                { first_name: { [Op.like]: `%${search}%` } },
+                { last_name: { [Op.like]: `%${search}%` } },
+                { email: { [Op.like]: `%${search}%` } },
             ];
         }
         //filtro por rol
