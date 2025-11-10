@@ -33,8 +33,13 @@ patientRouter.post("/", authMiddleware, upload.single('photo'), createPatient);
 patientRouter.get("/profile", authMiddleware, getMyProfile);
 patientRouter.put("/profile", authMiddleware, upload.single('photo'), updateMyProfile);
 
-// Admin o el propio usuario pueden ver/editar/desactivar/eliminar su cuenta
-patientRouter.get("/:id", authMiddleware, ownerMiddleware, getPatientById);
+// Admin, el propio usuario o el psicólogo de la cita pueden ver el perfil
+patientRouter.get(
+  "/:id",
+  authMiddleware,
+  ownerMiddleware,
+  getPatientById
+);
 patientRouter.put("/:id", authMiddleware, ownerMiddleware, upload.single('photo'), updatePatient);
 patientRouter.patch("/:id/deactivate", authMiddleware, ownerMiddleware, deactivatePatient);
 patientRouter.delete("/:id", authMiddleware, ownerMiddleware, deletePatient);
