@@ -114,7 +114,7 @@ export const getPsychologistById = async (req, res) => {
         {
           model: AvailabilityModel, // CA: mantener disponibilidades en bloque independiente
           as: "availabilities", // CA: alias correcto para disponibilidades
-          attributes: ["weekday", "specific_date", "start_time", "end_time", "is_available", "status", "notes"], // CA: exponer datos completos del calendario
+          attributes: ["id", "weekday", "specific_date", "start_time", "end_time", "is_available", "status", "notes"], // CA: incluir id para poder reservar el slot
         },
       ],
     });
@@ -224,7 +224,7 @@ await newProfile.setSpecialities(specialityInstances.filter(Boolean), { transact
           attributes: ["id", "name"],
           through: { attributes: [] },
         },
-        { model: AvailabilityModel, as: 'availabilities', attributes: ['weekday', 'specific_date', 'start_time', 'end_time', 'is_available', 'status', 'notes'] } // CA: devolver info completa del calendario
+        { model: AvailabilityModel, as: 'availabilities', attributes: ['id', 'weekday', 'specific_date', 'start_time', 'end_time', 'is_available', 'status', 'notes'] } // CA: devolver info completa del calendario
       ]
       }
     );
@@ -333,7 +333,7 @@ export const updatePsychologistProfile = async (req, res) => {
         {
           model: AvailabilityModel, // CA: incluir nuevas disponibilidades en la respuesta
           as: "availabilities",
-          attributes: ["weekday", "specific_date", "start_time", "end_time", "is_available", "status", "notes"],
+          attributes: ["id", "weekday", "specific_date", "start_time", "end_time", "is_available", "status", "notes"], // CA: enviar id al frontend
         },
       ],
     });
