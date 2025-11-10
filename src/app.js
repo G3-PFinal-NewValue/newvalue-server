@@ -12,6 +12,8 @@ import availabilityRouter from './routes/availability.routes.js';
 import sessionRouter from './routes/session.routes.js';
 import articleRouter from './routes/article.routes.js';
 import userRouter from './routes/user.routes.js';
+import specialityRoutes from './routes/speciality.routes.js';
+
 
 
 const app = express();
@@ -30,6 +32,9 @@ app.use('/availability', availabilityRouter);
 app.use('/session', sessionRouter);
 app.use('/article', articleRouter);
 app.use('/user', userRouter);
+
+app.use('/', specialityRoutes);
+
 
 
 // Ruta de prueba

@@ -1,22 +1,54 @@
 import PatientModel from "../models/PatientModel.js";
 import UserModel from "../models/UserModel.js";
 import RoleModel from "../models/RoleModel.js";
+import AppointmentModel from "../models/AppointmentModel.js"; // CA: necesario para vincular pacientes con citas del psicólogo
 
 // Obtener todos los pacientes (admin)
 export const getAllPatients = async (req, res) => {
     try {
-        const { includeInactive } = req.query; // ?includeInactive=true
-        const whereClause = includeInactive ? {} : { status: 'active' };
+        const userRole = req.user.role?.name || req.user.role; // CA: tolerar payloads donde role es objeto
 
-        const patients = await PatientModel.findAll({
-            where: whereClause,
-            include: {
-                model: UserModel,
-                as: 'user',
-                include: { model: RoleModel, as: 'role' },
-            },
-        });
-        res.status(200).json(patients);
+        if (userRole === "admin") { // CA: admins mantienen listado completo
+            const { includeInactive } = req.query; // ?includeInactive=true
+            const whereClause = includeInactive ? {} : { status: 'active' };
+
+            const patients = await PatientModel.findAll({
+                where: whereClause,
+                include: {
+                    model: UserModel,
+                    as: 'user',
+                    include: { model: RoleModel, as: 'role' },
+                },
+            });
+            return res.status(200).json(patients);
+        }
+
+        if (userRole === "psychologist") { // CA: cada psicólogo solo ve pacientes con citas suyas
+            const appointments = await AppointmentModel.findAll({
+                where: { psychologist_id: req.user.id },
+                attributes: ["patient_id"],
+                group: ["patient_id"],
+                raw: true,
+            });
+
+            const patientIds = appointments.map((appt) => appt.patient_id).filter(Boolean);
+            if (patientIds.length === 0) {
+                return res.status(200).json([]);
+            }
+
+            const patients = await PatientModel.findAll({
+                where: { user_id: patientIds },
+                include: {
+                    model: UserModel,
+                    as: "user",
+                    attributes: ["first_name", "last_name", "email"],
+                },
+            });
+
+            return res.status(200).json(patients);
+        }
+
+        return res.status(403).json({ message: "No autorizado" }); // CA: otros roles no pueden listar pacientes
     } catch (error) {
         console.error('Error al obtener los pacientes:', error);
         res.status(400).json({ message: error.message });
