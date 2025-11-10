@@ -1,7 +1,7 @@
-
 import nodemailer from 'nodemailer';
+import { setPasswordEmailTemplate } from '../utils/setPasswordEmailTemplate.js';
 
-export async function sendPasswordSetupEmail(to, token) {
+export async function sendPasswordSetupEmail(to, token, firstName = '') {
     const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
         port: 587,
@@ -17,8 +17,6 @@ export async function sendPasswordSetupEmail(to, token) {
         from: '"Cora Mind" <coramind.newvalue@gmail.com>',
         to,
         subject: 'Establece tu contraseña',
-        html: `<p>Hola, haz clic en el enlace para establecer tu contraseña:</p>
-            <a href="${setupUrl}">Establecer contraseña</a>
-            <p>Este enlace es válido 24 horas.</p>`
+        html: setPasswordEmailTemplate(firstName, setupUrl)
     });
 }

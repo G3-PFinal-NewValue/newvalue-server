@@ -223,7 +223,7 @@ export const setPassword = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
 
-    console.log("🟢 Token recibido:", token);
+    console.log("🟢 Token recibido");
 
     if (!token || !password) {
       return res.status(400).json({ message: "Token o contraseña faltante." });
@@ -255,8 +255,6 @@ export const setPassword = async (req, res) => {
       user_password_token: null,
       user_password_token_expiration: null,
     });
-
-    console.log("🟡 Antes de guardar, user.password_hash =", user.password_hash);
 
     await user.save();
 

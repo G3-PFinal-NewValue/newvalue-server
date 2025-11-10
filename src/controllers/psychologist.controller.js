@@ -62,13 +62,8 @@ export const getAllPsychologists = async (req, res) => {
       },
       {
         model: UserModel,
-<<<<<<< HEAD
-        as: 'user', // Usamos el alias de la asociación
-        attributes: ['first_name', 'last_name'] // Traemos solo lo necesario
-=======
         as: 'user', // CA: alias se mantiene para datos de usuario
         attributes: ['first_name', 'last_name', 'email'] // CA: eliminar avatar porque no existe en la tabla
->>>>>>> develop
       }
     ];
 
@@ -106,20 +101,10 @@ export const getPsychologistById = async (req, res) => {
           },
         },
         {
-<<<<<<< HEAD
-          model: LanguageModel,
-          as: 'languages',
-          attributes: ['id', 'name'],
-          through: { attributes: [] }, 
-          model: UserModel, 
-          as: "user", 
-          attributes: ["first_name", "last_name", "email"], 
-=======
           model: LanguageModel, // CA: separar include de idiomas para evitar mezcla de modelos
           as: 'languages', // CA: mantener alias correcto para idiomas
           attributes: ['id', 'name'], // CA: limitar atributos de idiomas
           through: { attributes: [] }, // CA: omitir datos de tabla pivote
->>>>>>> develop
         },
         {
           model: UserModel, // CA: incluir solo campos existentes del usuario

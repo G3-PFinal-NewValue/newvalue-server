@@ -11,15 +11,24 @@ import { sendPasswordSetupEmail } from "../utils/emailService.js";
 // Obtener todos los usuarios (solo admin)
 export const getAllUsers = async (req, res) => {
     try {
-        const { role } = req.query;
+        const { role, search } = req.query;
         const include = [{
             model: RoleModel,
             as: 'role',
             attributes: ['name'],
         }];
 
-        // Si se pide filtrar por rol (patient, psychologist, admin)
         let whereClause = {};
+
+        //Busqueda por nombre o email
+        if(search){
+            whereClause[Op.or] = [
+                { first_name: { [Op.iLike]: `%${search}%` } },
+                { last_name: { [Op.iLike]: `%${search}%` } },
+                { email: { [Op.iLike]: `%${search}%` } },
+            ];
+        }
+        //filtro por rol
         if (role) {
             const roleRecord = await RoleModel.findOne({
                 where: { name: role.toLowerCase() },
