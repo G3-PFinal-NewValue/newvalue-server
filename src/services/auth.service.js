@@ -20,7 +20,7 @@ const authService = {
       });
 
       const payload = ticket.getPayload();
-      const { sub, email, picture, given_name, family_name, name } = payload;
+      const { sub, email, given_name, family_name, name } = payload;
 
       console.log('3. Payload de Google recibido:', {
         sub,
@@ -59,7 +59,6 @@ const authService = {
           // Usuario existe con este email, vincular google_id
           console.log('9. Vinculando google_id al usuario existente');
           user.google_id = sub;
-          user.avatar = picture;
           if (!user.first_name) user.first_name = first_name;
           if (!user.last_name) user.last_name = last_name;
           await user.save();
@@ -87,7 +86,6 @@ const authService = {
           user = await User.create({
             email,
             google_id: sub,
-            avatar: picture,
             first_name,
             last_name,
             role_id: pendingRole.id,
@@ -137,7 +135,6 @@ const authService = {
           first_name: user.first_name,
           last_name: user.last_name,
           email: user.email,
-          avatar: user.avatar,
           role: user.role?.name ?? 'pending',
         },
         token: tokenJwt,

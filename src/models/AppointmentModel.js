@@ -31,6 +31,17 @@ const AppointmentModel = sequelize.define('appointment', {
     onUpdate: 'CASCADE',
   },
 
+  availability_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'availability',
+      key: 'id',
+    },
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE',
+  },
+
   date: {
     type: DataTypes.DATE,
     allowNull: false,

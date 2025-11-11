@@ -158,14 +158,12 @@ export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Verificar que se envíen los campos
+    // Validar campos
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Correo y contraseña requeridos." });
+      return res.status(400).json({ message: "Correo y contraseña requeridos." });
     }
 
-    // Buscar usuario con la relación 'role'
+    // Buscar usuario con su rol
     const user = await UserModel.findOne({
       where: { email },
       include: {
@@ -176,27 +174,34 @@ export const loginController = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+      return res.status(404).json({ message: "Usuario no encontrado." });
     }
 
-    // Comparar contraseñas
+    // Si el usuario fue creado por admin y aún no estableció contraseña
+    if (!user.password_hash) {
+      return res.status(403).json({ message: "Debes establecer una contraseña antes de iniciar sesión." });
+    }
+
+    // Comparar contraseña
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
       return res.status(401).json({ message: "Contraseña incorrecta." });
     }
 
-    // Verificar si el usuario está activo
+    // Verificar estado del usuario
     if (user.status !== "active") {
       return res.status(403).json({ message: "Cuenta inactiva o suspendida." });
     }
 
+    // Generar token JWT
     const token = generateJWT({
       id: user.id,
       email: user.email,
       role: user.role.name,
     });
 
-    res.status(200).json({
+    // Respuesta exitosa
+    return res.status(200).json({
       message: "Inicio de sesión exitoso",
       user: {
         id: user.id,
@@ -209,6 +214,57 @@ export const loginController = async (req, res) => {
     });
   } catch (error) {
     console.error("Error en login:", error);
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const setPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    console.log("🟢 Token recibido");
+
+    if (!token || !password) {
+      return res.status(400).json({ message: "Token o contraseña faltante." });
+    }
+
+    // Buscar usuario con ese token
+    const user = await UserModel.findOne({
+      where: { user_password_token: token },
+    });
+
+    if (!user) {
+      console.log("❌ Usuario no encontrado con el token");
+      return res.status(400).json({ message: "Token inválido." });
+    }
+
+    // Verificar expiración
+    if (user.user_password_token_expiration < new Date()) {
+      console.log("❌ Token expirado");
+      return res.status(400).json({ message: "El enlace ha expirado." });
+    }
+
+    // Encriptar contraseña
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("🔑 Contraseña hasheada:", hashedPassword);
+
+    // Guardar nueva contraseña y limpiar token
+    user.set({
+      password_hash: hashedPassword,
+      user_password_token: null,
+      user_password_token_expiration: null,
+    });
+
+    await user.save();
+
+    console.log("✅ Contraseña guardada correctamente para:", user.email);
+
+    return res
+      .status(200)
+      .json({ message: "Contraseña establecida correctamente." });
+  } catch (error) {
+    console.error("❌ Error en setPassword:", error);
+    res.status(500).json({ message: "Error interno del servidor." });
   }
 };

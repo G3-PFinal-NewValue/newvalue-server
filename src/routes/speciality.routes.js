@@ -6,9 +6,9 @@ import roleMiddleware from '../middleware/roleMiddleware.js';
 const specialityRouter = Router();
 
 // Cualquiera autenticado puede verlas
-specialityRouter.get('/', authMiddleware, getAllSpecialities);
+specialityRouter.get('/speciality', authMiddleware, getAllSpecialities);
 
 // Solo psicólogos o admins pueden crear nuevas
-specialityRouter.post('/', authMiddleware, roleMiddleware('psychologist', 'admin'), createSpeciality);
+specialityRouter.post('/speciality', authMiddleware, roleMiddleware('psychologist', 'admin'), createSpeciality);
 
 export default specialityRouter;
