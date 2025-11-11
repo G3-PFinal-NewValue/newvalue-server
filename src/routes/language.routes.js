@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { getAllLanguages } from '../controllers/languageController.js';
+import { getAllLanguages } from '../controllers/language.controller.js';
 
-const router = Router();
+const languageRouter = Router();
 
-router.get('/languages', getAllLanguages);
+languageRouter.get('/languages', getAllLanguages);
 
-export default router;
+export default languageRouter;

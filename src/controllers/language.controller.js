@@ -1,3 +1,5 @@
+import LanguageModel from '../models/LanguageModel.js';
+
 export const getAllLanguages = async (req, res) => {
     try {
         const languages = await LanguageModel.findAll({
