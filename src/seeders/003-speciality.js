@@ -1,14 +1,12 @@
-import SpecialityModel from '../models/SpecialityModel.js';
-
 export async function up(queryInterface, Sequelize) {
   await queryInterface.bulkInsert('speciality', [
-    { name: 'Terapia Cognitivo - Conductual', created_at: new Date(), updated_at: new Date() },
-    { name: 'Ansiedad y Estrés', created_at: new Date(), updated_at: new Date() },
-    { name: 'Depresión', created_at: new Date(), updated_at: new Date() },
-    { name: 'Terapia de Pareja', created_at: new Date(), updated_at: new Date() },
-    { name: 'Mindfulness', created_at: new Date(), updated_at: new Date() },
-    { name: 'Duelo', created_at: new Date(), updated_at: new Date() },
-    { name: 'Trastornos del Sueño', created_at: new Date(), updated_at: new Date() },
+    { name: 'Terapia Cognitivo - Conductual', deleted_at:null },
+    {  name: 'Ansiedad y Estrés', deleted_at:null },
+    {  name: 'Depresión', deleted_at:null },
+    {  name: 'Terapia de Pareja', deleted_at:null },
+    {  name: 'Mindfulness', deleted_at:null},
+    { name: 'Duelo', deleted_at:null },
+    { name: 'Trastornos del Sueño', deleted_at:null },
   ]);
 }
 
