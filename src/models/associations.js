@@ -85,7 +85,7 @@ ArticleModel.belongsTo(UserModel, {
 // ------------------------------------
 PsychologistModel.hasMany(AvailabilityModel, {
   foreignKey: "psychologist_id",
-  as: "availability",
+  as: "availabilities",
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });

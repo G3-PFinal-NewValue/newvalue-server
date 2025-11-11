@@ -113,7 +113,7 @@ export const getPsychologistById = async (req, res) => {
         },
         {
           model: AvailabilityModel, // CA: mantener disponibilidades en bloque independiente
-          as: "availability", // CA: alias correcto para disponibilidades
+          as: "availabilities", // CA: alias correcto para disponibilidades
           attributes: ["id", "weekday", "specific_date", "start_time", "end_time", "is_available", "status", "notes"], // CA: incluir id para poder reservar el slot
         },
       ],
