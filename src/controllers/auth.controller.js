@@ -173,6 +173,7 @@ export const loginController = async (req, res) => {
       },
     });
 
+    // Usuario no encontrado
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado." });
     }
