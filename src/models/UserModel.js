@@ -75,7 +75,6 @@ const UserModel = sequelize.define('user',
     // Rol
     role_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
       defaultValue: 1,
       references: {
         model: 'role',
@@ -91,7 +90,16 @@ const UserModel = sequelize.define('user',
     status: {
       type: DataTypes.ENUM('active', 'inactive', 'suspended'),
       defaultValue: 'active',
-      allowNull: false,
+    },
+
+    //cuando el admin crea un usuario
+    user_password_token: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    user_password_token_expiration: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {

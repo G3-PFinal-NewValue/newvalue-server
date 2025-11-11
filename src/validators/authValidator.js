@@ -16,7 +16,7 @@ export const registerValidator = [
   body("dni_nie_cif").notEmpty().withMessage("El DNI/NIE/CIF es obligatorio"),
   body("role")
     .optional() // El rol es opcional, ya que el controlador asigna 'patient' por defecto
-    .isIn(["patient", "psychologist"])
+    .isIn(["patient", "psychologist", "admin"])
     .withMessage('El rol debe ser "patient" o "psychologist"'),
 ];
 
