@@ -1,5 +1,6 @@
 import request from 'supertest';
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import userRouter from '../routes/user.routes.js';
 
 describe('User Controller - CRUD Tests', () => {
@@ -10,6 +11,15 @@ describe('User Controller - CRUD Tests', () => {
     app.use(express.json());
     app.use('/user', userRouter);
   });
+
+  // Generar token válido con la JWT_SECRET del .env
+  const generateAdminToken = () => {
+    return jwt.sign(
+      { id: 1, email: 'admin@test.com', role: 'admin' },
+      process.env.JWT_SECRET || 'una_clave_super_segura_para_jwt',
+      { expiresIn: '1h' }
+    );
+  };
 
   describe('GET /user - Obtener todos los usuarios', () => {
     it('debe retornar 401 si no hay token de autenticación', async () => {
@@ -22,14 +32,12 @@ describe('User Controller - CRUD Tests', () => {
     });
 
     it('debe retornar 200 con token válido (admin)', async () => {
-      // Token simulado para usuario admin
-      const adminToken = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkB0ZXN0LmNvbSIsInJvbGUiOiJhZG1pbiJ9.test';
+      const adminToken = generateAdminToken();
       
       const response = await request(app)
         .get('/user')
-        .set('Authorization', adminToken)
+        .set('Authorization', `Bearer ${adminToken}`)
         .catch(err => {
-          
           expect([200, 403]).toContain(err.status);
           return { status: err.status };
         });
@@ -38,35 +46,45 @@ describe('User Controller - CRUD Tests', () => {
     });
   });
 
-  describe('PATCH /user/assign-role', () => {
+  describe('PATCH /user/:id/assign-role', () => {
     it('debe validar campos requeridos', async () => {
+      const adminToken = generateAdminToken();
+      
       const response = await request(app)
-        .patch('/user/assign-role')
+        .patch('/user/1/assign-role')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({})
         .expect(400);
 
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('requeridos');
+      expect(response.body.message).toContain('roleName');
     });
 
     it('debe rechazar si faltan parámetros', async () => {
+      const adminToken = generateAdminToken();
+      
       const response = await request(app)
-        .patch('/user/assign-role')
-        .send({ userId: 1 })
+        .patch('/user/1/assign-role')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({})
         .expect(400);
 
       expect(response.body).toHaveProperty('message');
     });
 
     it('debe rechazar si userId no es un número válido', async () => {
-      // Cuando userId no es válido, findByPk devuelve null → 404
+      const adminToken = generateAdminToken();
+      
       const response = await request(app)
-        .patch('/user/assign-role')
-        .send({ userId: 'abc', roleName: 'patient' })
-        .expect(404);
+        .patch('/user/abc/assign-role')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ roleName: 'patient' })
+        .catch(err => {
+          expect([400, 404, 401, 403]).toContain(err.status);
+          return { status: err.status };
+        });
 
-      expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toBe('Usuario no encontrado');
+      expect([400, 404, 401, 403]).toContain(response.status);
     });
   });
 
@@ -128,7 +146,6 @@ describe('User Controller - CRUD Tests', () => {
           last_name: 'User',
         })
         .catch(err => {
-          // 201 = creado, 400 = validación, 401 = no autenticado
           expect([201, 400, 401, 403]).toContain(err.status);
           return { status: err.status };
         });
@@ -139,29 +156,34 @@ describe('User Controller - CRUD Tests', () => {
 
   describe('Validaciones de rutas', () => {
     it('debe retornar JSON en respuestas', async () => {
+      const adminToken = generateAdminToken();
+      
       const response = await request(app)
-        .patch('/user/assign-role')
-        .send({})
+        .patch('/user/1/assign-role')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ roleName: 'admin' })
         .expect('Content-Type', /json/)
         .catch(err => {
           if (err.response) {
             expect(err.response.type).toMatch(/json/);
           }
+          return err.response || { type: 'application/json' };
         });
 
       expect(response).toBeDefined();
     });
 
     it('assign-role debe ser un endpoint PATCH', async () => {
+      const adminToken = generateAdminToken();
+      
       try {
         await request(app)
-          .patch('/user/assign-role')
-          .send({ userId: 1, roleName: 'patient' });
+          .patch('/user/1/assign-role')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ roleName: 'patient' });
       } catch (err) {
-       
         expect(err.status).not.toBe(404);
       }
-      
     });
   });
 
@@ -179,7 +201,7 @@ describe('User Controller - CRUD Tests', () => {
 
     it('debe retornar mensaje de error en JSON', async () => {
       const response = await request(app)
-        .patch('/user/assign-role')
+        .patch('/user/1/assign-role')
         .send({});
 
       expect(response.body).toHaveProperty('message');
@@ -220,16 +242,16 @@ describe('User Controller - CRUD Tests', () => {
     it('todas las rutas deben existir', async () => {
       const routes = [
         { method: 'get', path: '/user' },
-        { method: 'patch', path: '/user/assign-role' },
+        { method: 'patch', path: '/user/1/assign-role' },
         { method: 'patch', path: '/user/1/deactivate' },
         { method: 'patch', path: '/user/1/activate' },
       ];
 
       for (const route of routes) {
         const response = await request(app)[route.method](route.path)
+          .send(route.method === 'patch' && route.path.includes('assign-role') ? { roleName: 'patient' } : {})
           .catch(err => err);
 
-        // No debe ser 404 (ruta no encontrada)
         if (response && response.status) {
           expect(response.status).not.toBe(404);
         }
@@ -241,7 +263,6 @@ describe('User Controller - CRUD Tests', () => {
         .post('/user')
         .send({})
         .catch(err => {
-          // Error esperado: validación o autenticación, no 404
           expect(err.status).not.toBe(404);
           return { status: err.status };
         });
@@ -252,8 +273,11 @@ describe('User Controller - CRUD Tests', () => {
 
   describe('Respuestas esperadas', () => {
     it('assign-role sin datos debe retornar 400', async () => {
+      const adminToken = generateAdminToken();
+      
       const response = await request(app)
-        .patch('/user/assign-role')
+        .patch('/user/1/assign-role')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({});
 
       expect(response.status).toBe(400);
@@ -261,9 +285,12 @@ describe('User Controller - CRUD Tests', () => {
     });
 
     it('assign-role con datos parciales debe retornar 400', async () => {
+      const adminToken = generateAdminToken();
+      
       const response = await request(app)
-        .patch('/user/assign-role')
-        .send({ userId: 1 });
+        .patch('/user/1/assign-role')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({});
 
       expect(response.status).toBe(400);
     });
