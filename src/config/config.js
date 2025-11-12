@@ -20,11 +20,17 @@ export default {
   test: {
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_TEST,
+    database: process.env.DB_NAME,
     host: process.env.DB_HOST,
     dialect: 'mysql',
     migrationStorageTableName: 'sequelize_meta',
     seederStorageTableName: 'sequelize_data',
-    logging: false
+    logging: false,
+    dialectOptions: { 
+      ssl: process.env.DB_HOST && process.env.DB_HOST.includes('tidbcloud.com') ? {
+        require: true,
+        rejectUnauthorized: true
+      } : false
+    }
   },
 };
