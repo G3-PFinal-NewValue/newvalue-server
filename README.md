@@ -172,7 +172,7 @@ La documentación completa en **Postman** de todos los endpoints, parámetros, r
 
 El diagrama de entidad-relación (ERD) y la documentación completa de las tablas, relaciones y campos está disponible en:
 
-**[📊 Ver Diagramas de Base de Datos](link)**
+**[📊 Ver Diagramas de Base de Datos](https://dbdiagram.io/d/NewValue-CoraMind-68f7329f2e68d21b4174bcd6)**
 
 
 #### Principales Tablas
@@ -246,8 +246,13 @@ Este proyecto está bajo la Licencia MIT.
 
 ## 👥 Autores
 
-- **** - [Tu GitHub](https://github.com/tu-usuario)
+- **Camila Arenas** - [GitHub](https://github.com/mcarenashd)
+- **Irina Tiron** - [GitHub](https://github.com/irinatiron)
+- **Luisa Silva** - [GitHub](https://github.com/luisasilva99)
+- **Mariana Moreno** - [GitHub](https://github.com/MarianaMH1195)
+- **Julia Zarco** - [GitHub](https://github.com/juliazmor)
+- **Michelle Gelves** - [GitHub](https://github.com/MichelleGel)
 
 ## 🙏 Agradecimientos
 
-- A todos los que contribuyeron al proyecto
+- A todos los que contribuyeron al proyecto.
