@@ -1,5 +1,6 @@
 export default {
   testEnvironment: 'node',
+  setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
   collectCoverageFrom: [
     'src/**/*.js',
     '!src/index.js',
