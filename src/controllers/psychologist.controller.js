@@ -136,7 +136,7 @@ export const createPsychologistProfile = async (req, res) => {
   try {
     const user_id = req.user.id;
     //CA: Agregué availabilities
-    const { license_number, specialities, professional_description, availabilities } = req.body;
+    const { license_number, specialities, professional_description, availabilities, languages } = req.body;
 
     //Validación Basica
     if (!license_number) {
@@ -202,6 +202,30 @@ export const createPsychologistProfile = async (req, res) => {
       //asociar las especialidades al psicologo
 await newProfile.setSpecialities(specialityInstances.filter(Boolean), { transaction: t });    }
 
+      // Manejar idiomas (languages)
+    if (languages) {
+      const languageArray = Array.isArray(languages)
+        ? languages
+        : JSON.parse(languages);
+
+      const languageInstances = await Promise.all(
+        languageArray.map(async (item) => {
+          if (!item) return null;
+          if (!isNaN(item)) {
+            return LanguageModel.findByPk(item);
+          } else {
+            const [language] = await LanguageModel.findOrCreate({
+              where: { name: item.trim() },
+            });
+            return language;
+          }
+        })
+      );
+
+      // Asociar los idiomas al psicólogo
+      await newProfile.setLanguages(languageInstances.filter(Boolean), { transaction: t });
+    }
+
     // CA: lógica de las disponibilidades
     if (availabilities) {
       const availabilityArray = JSON.parse(availabilities); // CA: parsear payload del calendario
@@ -224,7 +248,15 @@ await newProfile.setSpecialities(specialityInstances.filter(Boolean), { transact
           attributes: ["id", "name"],
           through: { attributes: [] },
         },
-        { model: AvailabilityModel, as: 'availabilities', attributes: ['id', 'weekday', 'specific_date', 'start_time', 'end_time', 'is_available', 'status', 'notes'] } // CA: devolver info completa del calendario
+        {
+            model: LanguageModel,
+            as: "languages",
+            attributes: ["id", "name", "code"],
+            through: { attributes: [] },
+          },
+        { model: AvailabilityModel, 
+          as: 'availabilities', 
+          attributes: ['id', 'weekday', 'specific_date', 'start_time', 'end_time', 'is_available', 'status', 'notes'] } // CA: devolver info completa del calendario
       ]
       }
     );
@@ -247,6 +279,7 @@ export const updatePsychologistProfile = async (req, res) => {
     const {
       license_number,
       specialities,
+      languages,
       professional_description,
       status,
       validated,
@@ -302,8 +335,33 @@ export const updatePsychologistProfile = async (req, res) => {
       await profile.setSpecialities(specialityInstances.filter(Boolean));
     }
 
+    // Actualizar idiomas
+    if (languages) {
+      const languageArray = Array.isArray(languages)
+        ? languages
+        : JSON.parse(languages);
+
+      const languageInstances = await Promise.all(
+        languageArray.map(async (item) => {
+          if (!item) return null;
+          if (!isNaN(item)) {
+            return LanguageModel.findByPk(item);
+          } else {
+            const [language] = await LanguageModel.findOrCreate({
+              where: { name: item.trim() },
+            });
+            return language;
+          }
+        })
+      );
+
+      // Reemplazar los idiomas anteriores por los nuevos
+      await profile.setLanguages(languageInstances.filter(Boolean), { transaction: t });
+    }
+
+    // Actualizar disponibilidades
     if (availabilities) {
-      // 4a. Borrar todas las disponibilidades anteriores
+      // Borrar todas las disponibilidades anteriores
       await AvailabilityModel.destroy({
         where: { psychologist_id: id },
         transaction: t
@@ -328,6 +386,12 @@ export const updatePsychologistProfile = async (req, res) => {
           model: SpecialityModel, // CA: devolver especialidades actualizadas
           as: "specialities",
           attributes: ["id", "name"],
+          through: { attributes: [] },
+        },
+        {
+          model: LanguageModel,
+          as: "languages",
+          attributes: ["id", "name", "code"],
           through: { attributes: [] },
         },
         {
