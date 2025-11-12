@@ -104,12 +104,13 @@ export const registerController = async (req, res) => {
       dni_nie_cif,
     });
 
-    // === 📧 Enviar correo de bienvenida ===
-    await transporter.sendMail({
-      from: `"Cora Mind" <${process.env.SMTP_USER}>`,
-      to: newUser.email,
-      subject: "Bienvenida a Cora Mind",
-      html: `
+    // === 📧 Enviar correo de bienvenida (no bloquear registro si falla) ===
+    try {
+      await transporter.sendMail({
+        from: `"Cora Mind" <${process.env.SMTP_USER}>`,
+        to: newUser.email,
+        subject: "Bienvenida a Cora Mind",
+        html: `
         <div style="background-color: #f4f1e8; font-family: 'Visby', system-ui, sans-serif; color: #333; padding: 30px 20px; font-size: 16px; line-height: 1.6;">
           <div style="text-align: center; margin-bottom: 25px;">
             <img src="https://res.cloudinary.com/dkm0ahny1/image/upload/v1762168143/coramind-logo-email_aiwngo.png" width="140" alt="Cora Mind Logo" />
@@ -120,7 +121,10 @@ export const registerController = async (req, res) => {
           <p>Gracias por confiar en nosotros.<br><strong>El equipo de Cora Mind</strong></p>
         </div>
       `,
-    });
+      });
+    } catch (mailError) {
+      console.warn("No se pudo enviar el correo de bienvenida:", mailError.message);
+    }
 
     // === 🔐 Generar token JWT ===
     const token = generateJWT({
