@@ -9,7 +9,13 @@ export default {
     port: process.env.DB_PORT,
     dialect: 'mysql',
     migrationStorageTableName: 'sequelize_meta',
-    seederStorageTableName: 'sequelize_data'
+    seederStorageTableName: 'sequelize_data',
+    dialectOptions: {
+      ssl: process.env.DB_HOST && process.env.DB_HOST.includes('tidbcloud.com') ? {
+        require: true,
+        rejectUnauthorized: true
+      } : false
+    }
   },
   test: {
     username: process.env.DB_USER,
