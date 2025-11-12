@@ -15,7 +15,13 @@ export const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: 'mysql',
-    logging: false
+    logging: false,
+    dialectOptions: {
+      ssl: process.env.DB_HOST.includes('tidbcloud.com') ? {
+        require: true,
+        rejectUnauthorized: true
+      } : false
+    }
   }
 );
 
