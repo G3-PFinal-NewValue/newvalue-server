@@ -3,12 +3,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const isDevelopment = process.env.NODE_ENV === 'development';
-const isProduction = process.env.NODE_ENV === 'production';
-const isTest = process.env.NODE_ENV === 'test';
+const NODE_ENV = process.env.NODE_ENV || "development";
+
+// Elegir base de datos según el entorno
+const DBNAME = NODE_ENV === "test" ? process.env.DB_TEST_NAME : process.env.DB_NAME;
+
 
 export const sequelize = new Sequelize(
-  process.env.DB_NAME,
+  DBNAME,
   process.env.DB_USER,
   process.env.DB_PASSWORD,
   {
