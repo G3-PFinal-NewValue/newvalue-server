@@ -65,9 +65,9 @@ CLIENT_URL=http://localhost:5173
 
 4. **Crear la base de datos**
 ```bash
-mysql -u root -p
+mysql workbench
 CREATE DATABASE coramind;
-EXIT;
+
 ```
 
 5. **Ejecutar migraciones**
@@ -131,7 +131,7 @@ El sistema utiliza JWT para autenticación. Incluye soporte para:
 
 - Registro y login con email/password
 - Login con Google OAuth
-- Recuperación de contraseña
+- Creación de contraseña
 - Roles de usuario (admin, psicólogo, paciente)
 
 ## 📚 Endpoints Principales
@@ -140,7 +140,7 @@ El sistema utiliza JWT para autenticación. Incluye soporte para:
 - `POST /api/auth/register` - Registro de usuario
 - `POST /api/auth/login` - Login
 - `POST /api/auth/google` - Login con Google
-- `POST /api/auth/forgot-password` - Recuperar contraseña
+- `POST /api/auth/set-password` - Crear contraseña
 
 ### Usuarios
 - `GET /api/users` - Listar usuarios (admin)
@@ -172,7 +172,7 @@ La documentación completa en **Postman** de todos los endpoints, parámetros, r
 
 El diagrama de entidad-relación (ERD) y la documentación completa de las tablas, relaciones y campos está disponible en:
 
-**[📊 Ver Diagrama y Documentación de Base de Datos](link)**
+**[📊 Ver Diagramas de Base de Datos](link)**
 
 
 #### Principales Tablas
