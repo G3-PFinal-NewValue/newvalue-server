@@ -3,6 +3,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === 'production';
+const isTest = process.env.NODE_ENV === 'test';
+
 export const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
@@ -19,7 +23,7 @@ export const connectDB = async () => {
   try {
     await sequelize.authenticate();
     console.log('🟢 Conexión a la base de datos establecida correctamente.');
-    await sequelize.sync({alter:true}); // Crea/actualiza tablas según modelos
+    await sequelize.sync(); // Crea/actualiza tablas según modelos
   } catch (error) {
     console.error('🔴 Error al conectar con la base de datos:', error);
     process.exit(1);

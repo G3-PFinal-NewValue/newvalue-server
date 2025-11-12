@@ -6,9 +6,9 @@ import upload from '../middleware/uploadMiddleware.js';
 
 const articleRouter = express.Router();
 
-// Público
-articleRouter.get('/', articleController.getAllArticles);
-articleRouter.get('/:id', articleController.getArticleById);
+//Público
+articleRouter.get('/blog', articleController.getAllArticles);
+articleRouter.get('/blog/:id', articleController.getArticleById);
 
 // Solo admin
 articleRouter.post('/', authMiddleware, roleMiddleware("admin"), upload.single('image'), articleController.createArticle);

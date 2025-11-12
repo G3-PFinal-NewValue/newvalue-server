@@ -1,12 +1,48 @@
 import PsychologistModel from "../models/PsychologistModel.js";
 import cloudinary from "../utils/cloudinaryConfig.js";
 import SpecialityModel from "../models/SpecialityModel.js";
+import LanguageModel from "../models/LanguageModel.js";
 import fs from "fs";
 import { sequelize } from "../config/database.js";
 import UserModel from "../models/UserModel.js";
 import AvailabilityModel from "../models/AvailabilityModel.js";
 import AppointmentModel from "../models/AppointmentModel.js";
 import { Op } from "sequelize";
+
+const deriveWeekdayFromDate = (dateString) => { // CA: helper para mantener el campo weekday aún con fechas específicas
+  if (!dateString) return null; // CA: sin fecha no calculamos
+  const jsDay = new Date(dateString).getDay(); // CA: 0-domingo a 6-sábado
+  return jsDay === 0 ? 7 : jsDay; // CA: convertir a rango 1-7
+};
+
+const buildAvailabilityRecords = (slots, psychologistId) => { // CA: normalizar payload de calendario al formato de BD
+  return slots
+    .map((slot) => { // CA: recorrer cada disponibilidad
+      const specificDate = slot.specific_date || null; // CA: fecha requerida por evento
+      if (
+        !specificDate || // CA: saltar si falta fecha
+        !slot.start_time || // CA: validar hora inicio
+        !slot.end_time // CA: validar hora fin
+      ) {
+        return null; // CA: descartamos registros incompletos
+      }
+
+      const isAvailable =
+        slot.is_available !== undefined ? slot.is_available : true; // CA: default true
+
+      return {
+        psychologist_id: psychologistId, // CA: FK del profesional
+        specific_date: specificDate, // CA: guardar fecha exacta
+        weekday: slot.weekday ?? deriveWeekdayFromDate(specificDate), // CA: conservar weekday para compatibilidad
+        start_time: slot.start_time, // CA: hora de inicio
+        end_time: slot.end_time, // CA: hora de fin
+        is_available: isAvailable, // CA: bandera directa
+        status: isAvailable ? "available" : "unavailable", // CA: sincronizar enum existente
+        notes: slot.notes || null, // CA: notas opcionales
+      };
+    })
+    .filter(Boolean); // CA: eliminar entradas inválidas
+};
 
 // Obtener todos los psicólogos (activos y validados)
 export const getAllPsychologists = async (req, res) => {
@@ -26,8 +62,8 @@ export const getAllPsychologists = async (req, res) => {
       },
       {
         model: UserModel,
-        as: 'user', // Usamos el alias de la asociación
-        attributes: ['first_name', 'last_name', 'avatar'] // Traemos solo lo necesario
+        as: 'user', // CA: alias se mantiene para datos de usuario
+        attributes: ['first_name', 'last_name', 'email'] // CA: eliminar avatar porque no existe en la tabla
       }
     ];
 
@@ -65,14 +101,20 @@ export const getPsychologistById = async (req, res) => {
           },
         },
         {
-          model: UserModel, // <-- Añade el modelo User
-          as: "user", // <-- Usa el alias que definimos
-          attributes: ["first_name", "last_name", "email", "avatar"], // Trae solo los datos necesarios
+          model: LanguageModel, // CA: separar include de idiomas para evitar mezcla de modelos
+          as: 'languages', // CA: mantener alias correcto para idiomas
+          attributes: ['id', 'name'], // CA: limitar atributos de idiomas
+          through: { attributes: [] }, // CA: omitir datos de tabla pivote
         },
         {
-          model: AvailabilityModel, // <-- Añade el modelo Availability
-          as: "availabilities", // <-- Usa el alias que definimos
-          attributes: ["weekday", "start_time", "end_time"], // Trae los datos necesarios
+          model: UserModel, // CA: incluir solo campos existentes del usuario
+          as: "user", // CA: alias requerido en el frontend
+          attributes: ["first_name", "last_name", "email"], // CA: eliminar avatar inexistente
+        },
+        {
+          model: AvailabilityModel, // CA: mantener disponibilidades en bloque independiente
+          as: "availabilities", // CA: alias correcto para disponibilidades
+          attributes: ["id", "weekday", "specific_date", "start_time", "end_time", "is_available", "status", "notes"], // CA: incluir id para poder reservar el slot
         },
       ],
     });
@@ -162,16 +204,12 @@ await newProfile.setSpecialities(specialityInstances.filter(Boolean), { transact
 
     // CA: lógica de las disponibilidades
     if (availabilities) {
-      const availabilityArray = JSON.parse(availabilities);
-      if (Array.isArray(availabilityArray) && availabilityArray.length > 0) {
-        
-        const availData = availabilityArray.map(a => ({
-          psychologist_id: user_id,
-          weekday: a.weekday,
-          start_time: a.start_time,
-          end_time: a.end_time
-        }));
-        await AvailabilityModel.bulkCreate(availData, { transaction: t });
+      const availabilityArray = JSON.parse(availabilities); // CA: parsear payload del calendario
+      if (Array.isArray(availabilityArray) && availabilityArray.length > 0) { // CA: validar contenido
+        const availData = buildAvailabilityRecords(availabilityArray, user_id); // CA: normalizar estructura
+        if (availData.length > 0) { // CA: solo insertar si hay registros válidos
+          await AvailabilityModel.bulkCreate(availData, { transaction: t }); // CA: crear disponibilidades con fechas exactas
+        }
       }
     }
     await t.commit();
@@ -186,7 +224,7 @@ await newProfile.setSpecialities(specialityInstances.filter(Boolean), { transact
           attributes: ["id", "name"],
           through: { attributes: [] },
         },
-        { model: AvailabilityModel, as: 'availabilities', attributes: ['weekday', 'start_time', 'end_time'] }
+        { model: AvailabilityModel, as: 'availabilities', attributes: ['id', 'weekday', 'specific_date', 'start_time', 'end_time', 'is_available', 'status', 'notes'] } // CA: devolver info completa del calendario
       ]
       }
     );
@@ -272,17 +310,12 @@ export const updatePsychologistProfile = async (req, res) => {
       });
 
       // 4b. Crear las nuevas disponibilidades
-      const availabilityArray = JSON.parse(availabilities);
-      if (Array.isArray(availabilityArray) && availabilityArray.length > 0) {
-        
-        const availData = availabilityArray.map(a => ({
-          psychologist_id: id,
-          weekday: a.weekday,
-          start_time: a.start_time,
-          end_time: a.end_time
-        }));
-
-        await AvailabilityModel.bulkCreate(availData, { transaction: t });
+      const availabilityArray = JSON.parse(availabilities); // CA: payload proveniente del calendario
+      if (Array.isArray(availabilityArray) && availabilityArray.length > 0) { // CA: validar contenido
+        const availData = buildAvailabilityRecords(availabilityArray, id); // CA: normalizar campos (specific_date, status, etc.)
+        if (availData.length > 0) { // CA: insertar solo si existen registros válidos
+          await AvailabilityModel.bulkCreate(availData, { transaction: t }); // CA: recrear disponibilidades
+        }
       }
     }
 
@@ -290,12 +323,19 @@ export const updatePsychologistProfile = async (req, res) => {
     await t.commit(); 
 
     const updatedProfile = await PsychologistModel.findByPk(id, {
-      include: {
-        model: SpecialityModel,
-        as: "specialities",
-        attributes: ["id", "name"],
-        through: { attributes: [] },
-      },
+      include: [
+        {
+          model: SpecialityModel, // CA: devolver especialidades actualizadas
+          as: "specialities",
+          attributes: ["id", "name"],
+          through: { attributes: [] },
+        },
+        {
+          model: AvailabilityModel, // CA: incluir nuevas disponibilidades en la respuesta
+          as: "availabilities",
+          attributes: ["id", "weekday", "specific_date", "start_time", "end_time", "is_available", "status", "notes"], // CA: enviar id al frontend
+        },
+      ],
     });
 
     res.status(200).json({
@@ -416,3 +456,149 @@ export const getPsychologistBookedSlots = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+//PARA EL PSICOLOGO
+
+//Ver perfil propio
+export const getMyProfile = async (req, res) => {
+  try {
+    const psychologist = await PsychologistModel.findOne({
+      where: { user_id: req.user.id },
+      include: [
+        {
+          model: SpecialityModel,
+          as: 'specialities',
+          attributes: ['id', 'name'],
+          through: { attributes: [] },
+        },
+        {
+          model: LanguageModel,
+          as: 'languages',
+          attributes: ['id', 'name'],
+          through: { attributes: [] }, // oculta la tabla intermedia
+        },
+      ],
+    });
+
+    if (!psychologist) {
+      return res.status(404).json({ message: 'Perfil no encontrado' });
+    }
+
+    res.status(200).json(psychologist);
+  } catch (error) {
+    console.error('Error al obtener el perfil:', error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+//Actualizar perfil propio
+export const updateMyProfile = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const user_id = req.user.id;
+    const { license_number, specialities, professional_description, photo, languages } = req.body;
+
+    const profile = await PsychologistModel.findOne({
+      where: { user_id },
+      include: [{ association: 'languages' }, { association: 'specialities' }],
+        transaction
+    });
+
+    if (!profile) {
+      await transaction.rollback();
+      return res.status(404).json({ message: 'Perfil no encontrado' });
+    }
+
+    //Subir nueva foto si viene un archivo
+    if (req.file) {
+      if (profile.photo_public_id) {
+        await cloudinary.uploader.destroy(profile.photo_public_id);
+      }
+      const result = await cloudinary.uploader.upload(req.file.path, { folder: 'psychologists' });
+      profile.photo = result.secure_url;
+      profile.photo_public_id = result.public_id;
+      fs.unlinkSync(req.file.path);
+    } else if (photo) {
+      //si manda directamente una url
+      profile.photo = photo;
+    }
+
+    //Actualizar campos básicos
+    if (license_number) profile.license_number = license_number;
+    if (professional_description) profile.professional_description = professional_description;
+
+    //Actualizar especialidades
+    if (specialities) {
+      const specialityArray = Array.isArray(specialities)
+        ? specialities
+        : JSON.parse(specialities);
+
+      const specialityInstances = await Promise.all(
+        specialityArray.map(async (item) => {
+          if (!item) return null;
+          if (!isNaN(item)) {
+            return SpecialityModel.findByPk(item);
+          } else {
+            const [speciality] = await SpecialityModel.findOrCreate({
+              where: { name: item.trim() },
+            });
+            return speciality;
+          }
+        })
+      )
+      await profile.setSpecialities(specialityInstances.filter(Boolean));
+    }
+
+    // Actualizar idiomas (si se envía el campo)
+    if (languages) {
+      const languageArray = Array.isArray(languages)
+        ? languages
+        : JSON.parse(languages);
+
+      const languageInstances = await Promise.all(
+        languageArray.map(async (item) => {
+          if (!item) return null;
+          if (!isNaN(item)) {
+            // si es id
+            return LanguageModel.findByPk(item);
+          } else {
+            // si es nombre nuevo
+            const [language] = await LanguageModel.findOrCreate({
+              where: { name: item.trim() },
+              defaults: {code: null},
+              transaction,
+            });
+            return language;
+          }
+        })
+      );
+      await profile.setLanguages(languageInstances.filter(Boolean));
+    }
+
+    await profile.save({ transaction });
+    await transaction.commit();
+
+    const updatedProfile = await PsychologistModel.findOne({
+      where: { user_id },
+      include: [
+        {
+          model: SpecialityModel,
+          as: 'specialities',
+          attributes: ['id', 'name'],
+          through: { attributes: [] },
+        },
+        {
+          model: LanguageModel,
+          as: 'languages',
+          attributes: ['id', 'name'],
+          through: { attributes: [] },
+        },
+      ],
+    });
+    res.status(200).json({ message: 'Perfil actualizado correctamente', profile: updatedProfile });
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error al actualizar perfil', error);
+    res.status(400).json({ message: error.message });
+  }
+}

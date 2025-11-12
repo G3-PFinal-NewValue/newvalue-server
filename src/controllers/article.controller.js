@@ -57,7 +57,6 @@ export const getArticleById = async (req, res) => {
 
 export const createArticle = async (req, res) => {
   try {
-    // Validar rol
     const VerifyRole = req.user.role;
     if (!req.user.id || VerifyRole !== 'admin') {
       return res.status(403).json({ message: 'Solo admin puede crear un artículo' });
@@ -70,7 +69,6 @@ export const createArticle = async (req, res) => {
       }
     }
 
-    // 🔹 Si hay imagen subida por multer, req.file tendrá la URL de Cloudinary
     const imageUrl = req.file ? req.file.path : null;
 
     const newArticle = await ArticleModel.create({
@@ -95,19 +93,18 @@ export const updateArticle = async (req, res) => {
 
     const { id } = req.params;
 
-    // Obtener el artículo actual para mantener la imagen si no se sube una nueva
     const currentArticle = await ArticleModel.findByPk(id);
     if (!currentArticle) {
       return res.status(404).json({ message: 'Artículo no encontrado' });
     }
 
-    // 🔹 Si hay nueva imagen, usarla; si no, mantener la anterior
+
     const imageUrl = req.file ? req.file.path : currentArticle.image;
 
     const [updated] = await ArticleModel.update(
       {
         ...req.body,
-        image: imageUrl, // 👈 Actualizar imagen (nueva o anterior)
+        image: imageUrl, 
         published_at: req.body.published ? new Date() : null,
       },
       { where: { id } }

@@ -1,14 +1,52 @@
 import UserModel from "../models/UserModel.js";
 import RoleModel from "../models/RoleModel.js";
 import { generateJWT } from "../utils/generateJWT.js";
+import crypto from "crypto";
+import { sendPasswordSetupEmail } from "../utils/emailService.js";
+import { Op } from "sequelize";
 
+
+// =========================
+// CONTROLADOR DE USUARIOS
+// =========================
+
+// Obtener todos los usuarios (solo admin)
 export const getAllUsers = async (req, res) => {
     try {
+        const { role, search } = req.query;
+        const include = [{
+            model: RoleModel,
+            as: 'role',
+            attributes: ['name'],
+        }];
+
+        let whereClause = {};
+
+        //Busqueda por nombre o email
+        if(search){
+            whereClause[Op.or] = [
+                { first_name: { [Op.like]: `%${search}%` } },
+                { last_name: { [Op.like]: `%${search}%` } },
+                { email: { [Op.like]: `%${search}%` } },
+            ];
+        }
+        //filtro por rol
+        if (role) {
+            const roleRecord = await RoleModel.findOne({
+                where: { name: role.toLowerCase() },
+            });
+
+            if (!roleRecord) {
+                return res.status(400).json({ message: `El rol '${role}' no existe` });
+            }
+
+            whereClause = { role_id: roleRecord.id };
+        }
         const users = await UserModel.findAll({
-            include: {
-                model: RoleModel,
-                as: 'role',
-            },
+            where: whereClause,
+            include,
+            attributes: ["id", "first_name", "last_name", "email", "created_at"],
+            order: [["id", "ASC"]],
         });
         res.status(200).json(users);
     } catch (error) {
@@ -17,6 +55,7 @@ export const getAllUsers = async (req, res) => {
     }
 };
 
+//Obtener un usuario por ID (solo admin)
 export const getUserById = async (req, res) => {
     try {
         const user = await UserModel.findByPk(req.params.id, {
@@ -33,82 +72,122 @@ export const getUserById = async (req, res) => {
     }
 };
 
-export const createUser = async (req, res) => {
-  try {
-    const {
-      email,
-      first_name,
-      last_name,
-      phone,
-      postal_code,
-      province,
-      full_address,
-      city,
-      country,
-      dni_nie_cif,
-      roleName
-    } = req.body;
+export const adminCreateUser = async (req, res) => {
+    try {
+        const {
+            email,
+            first_name,
+            last_name,
+            phone,
+            postal_code,
+            province,
+            full_address,
+            city,
+            country,
+            dni_nie_cif,
+            roleName,
+            role_id,
+        } = req.body;
 
-    // Validación de campos obligatorios
-    if (!email || !first_name || !last_name || !phone || !postal_code || !province || !full_address || !city || !country || !dni_nie_cif) {
-      return res.status(400).json({ message: "Todos los campos obligatorios deben estar completos" });
+        // 🔹 Validar campos obligatorios
+        if (
+            !email ||
+            !first_name ||
+            !last_name ||
+            !phone ||
+            !postal_code ||
+            !province ||
+            !full_address ||
+            !city ||
+            !country ||
+            !dni_nie_cif
+        ) {
+            return res
+                .status(400)
+                .json({ message: "Todos los campos obligatorios deben estar completos" });
+        }
+
+        // 🔹 Determinar el rol final
+        let finalRoleId = role_id;
+
+        if (!finalRoleId) {
+            const role = await RoleModel.findOne({
+                where: { name: roleName || "patient" },
+            });
+            finalRoleId = role ? role.id : 3; // si no encuentra, usa paciente
+        }
+
+        // 🔹 Crear usuario
+        const newUser = await UserModel.create({
+            email,
+            first_name,
+            last_name,
+            phone,
+            postal_code,
+            province,
+            full_address,
+            city,
+            country,
+            dni_nie_cif,
+            role_id: finalRoleId,
+        });
+
+        // 🔹 Generar token y guardar
+        const token = crypto.randomBytes(32).toString("hex");
+        const expiration = new Date();
+        expiration.setHours(expiration.getHours() + 24); // válido 24 horas
+
+        newUser.user_password_token = token;
+        newUser.user_password_token_expiration = expiration;
+        await newUser.save();
+
+        // 🔹 Enviar email con el token
+        await sendPasswordSetupEmail(newUser.email, token);
+
+        return res
+            .status(201)
+            .json({
+                message: "Usuario creado correctamente. Email enviado para establecer contraseña.",
+                user: newUser,
+            });
+    } catch (error) {
+        console.error("Error al crear usuario:", error);
+        res.status(400).json({ message: error.message });
     }
-
-    const newUser = await UserModel.create({
-      email,
-      first_name,
-      last_name,
-      phone,
-      postal_code,
-      province,
-      full_address,
-      city,
-      country,
-      dni_nie_cif,
-      role_id: 3 // paciente por defecto
-    });
-
-    // Asignar rol
-    const role = await RoleModel.findOne({ where: { name: roleName || "patient" } });
-    newUser.role_id = role.id;
-    await newUser.save();
-
-    res.status(201).json({ user: newUser, role: role.name });
-  } catch (error) {
-    console.error("Error al crear usuario:", error);
-    res.status(400).json({ message: error.message });
-  }
 };
 
+
+//actualizar usuario (admin o propio usuario)
 export const updateUser = async (req, res) => {
-  try {
-    const {
-      first_name,
-      last_name,
-      phone,
-      postal_code,
-      province,
-      full_address,
-      city,
-      country,
-      dni_nie_cif,
-      email
-    } = req.body;
+    try {
+        const {
+            first_name,
+            last_name,
+            phone,
+            postal_code,
+            province,
+            full_address,
+            city,
+            country,
+            dni_nie_cif,
+            email
+        } = req.body;
 
-    const [rows, [updatedUser]] = await UserModel.update(
-      { first_name, last_name, phone, postal_code, province, full_address, city, country, dni_nie_cif, email },
-      { where: { id: req.params.id }, returning: true }
-    );
+        const [rows, [updatedUser]] = await UserModel.update(
+            { first_name, last_name, phone, postal_code, province, full_address, city, country, dni_nie_cif, email },
+            { where: { id: req.params.id }, returning: true }
+        );
 
-    if (!rows) return res.status(404).json({ message: "Usuario no encontrado" });
+        if (!rows) return res.status(404).json({ message: "Usuario no encontrado" });
 
-    res.status(200).json({ message: "Usuario actualizado", user: updatedUser });
-  } catch (error) {
-    console.error("Error al actualizar usuario:", error);
-    res.status(400).json({ message: error.message });
-  }
+        res.status(200).json({ message: "Usuario actualizado", user: updatedUser });
+    } catch (error) {
+        console.error("Error al actualizar usuario:", error);
+        res.status(400).json({ message: error.message });
+    }
 };
 
+//desactivar cuenta de usuario
 export const deactivateUser = async (req, res) => {
     try {
         const user = await UserModel.findByPk(req.params.id);
@@ -124,6 +203,7 @@ export const deactivateUser = async (req, res) => {
     }
 };
 
+//activar cuenta de usuario
 export const activateUser = async (req, res) => {
     try {
         const user = await UserModel.findByPk(req.params.id);
@@ -139,10 +219,14 @@ export const activateUser = async (req, res) => {
     }
 };
 
+// soft delete de eliminacion de usuario
 export const deleteUser = async (req, res) => {
     try {
         const deleted = await UserModel.destroy({ where: { id: req.params.id } });
-        if (!deleted) return res.status(404).json({ message: "Usuario no encontrado" });
+        if (!deleted) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
         res.status(200).json({ message: "Usuario eliminado" });
     } catch (error) {
         console.error("Error al eliminar usuario:", error);
@@ -150,73 +234,46 @@ export const deleteUser = async (req, res) => {
     }
 };
 
+// Asignar rol a usuario (solo admin)
 export const assignRole = async (req, res) => {
     try {
-        console.log('=== assignRole ===');
-        const { userId, roleName } = req.body;
-        console.log('1. Datos recibidos:', { userId, roleName });
+        const { roleName } = req.body;
 
-        // Validación de entrada
-        if (!userId || !roleName) {
-            return res.status(400).json({ message: 'userId y roleName son requeridos' });
-        }
+        if (!roleName) return res.status(400).json({ message: "Se requiere roleName" });
 
-        // Buscar usuario
-        console.log('2. Buscando usuario con id:', userId);
-        const user = await UserModel.findByPk(userId);
-        if (!user) {
-            console.log('❌ Usuario no encontrado');
-            return res.status(404).json({ message: 'Usuario no encontrado' });
-        }
-        console.log('3. Usuario encontrado:', user.email);
+        const user = await UserModel.findByPk(req.params.id);
+        if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
-        // Buscar rol
-        console.log('4. Buscando rol:', roleName);
         const role = await RoleModel.findOne({ where: { name: roleName } });
-        if (!role) {
-            console.log('❌ Rol no encontrado');
-            return res.status(404).json({ message: 'Rol no encontrado' });
-        }
-        console.log('5. Rol encontrado, id:', role.id);
+        if (!role) return res.status(404).json({ message: "Rol no encontrado" });
 
-        // Asignar rol
-        console.log('6. Asignando rol al usuario...');
         user.role_id = role.id;
         await user.save();
-        console.log('7. Rol guardado');
 
-        // Recargar con la relación
-        console.log('8. Recargando usuario con relación role...');
+        // Recargar usuario con la relación
         await user.reload({ include: { model: RoleModel, as: 'role' } });
-        console.log('9. Usuario recargado. Rol actual:', user.role?.name);
 
-        // Generar nuevo token con el rol actualizado
-        console.log('10. Generando nuevo JWT...');
+        // Generar nuevo token
         const token = generateJWT({
             id: user.id,
             email: user.email,
             role: user.role.name,
         });
-        console.log('11. JWT generado');
 
-        // ESTA ES LA PARTE CRÍTICA - Devolver usuario completo y token
-        const response = {
+        return res.status(200).json({
+            message: "Rol asignado correctamente",
             user: {
                 id: user.id,
                 first_name: user.first_name,
                 last_name: user.last_name,
                 email: user.email,
-                avatar: user.avatar,
                 role: user.role.name,
             },
             token,
-        };
-
-        console.log('12. Enviando respuesta completa:', response);
-        res.status(200).json(response);
+        })
 
     } catch (error) {
-        console.error("❌ Error al asignar rol:", error);
+        console.error("Error al asignar rol:", error);
         res.status(500).json({ message: error.message });
     }
 };
