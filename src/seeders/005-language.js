@@ -1,5 +1,3 @@
-"use strict";
-
 export async function up(queryInterface, Sequelize) {
     const languages = [
         { name: "Español", code: "es" },
