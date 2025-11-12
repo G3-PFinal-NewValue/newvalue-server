@@ -42,7 +42,7 @@ const ArticleModel = sequelize.define('article', {
     allowNull: false,
   },
 
-   image: {
+    image: {
     type: DataTypes.STRING,
     allowNull: true,
     defaultValue: null,

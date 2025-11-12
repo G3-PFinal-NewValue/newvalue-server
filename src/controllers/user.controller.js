@@ -45,7 +45,7 @@ export const getAllUsers = async (req, res) => {
         const users = await UserModel.findAll({
             where: whereClause,
             include,
-            attributes: ["id", "first_name", "last_name", "email", "created_at"],
+            attributes: ["id", "first_name", "last_name", "email", "status", "created_at"],
             order: [["id", "ASC"]],
         });
         res.status(200).json(users);

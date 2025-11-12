@@ -29,8 +29,8 @@ psychologistRouter.put("/profile", authMiddleware, roleMiddleware("psychologist"
 // Crear perfil de psicólogo con foto opcional
 psychologistRouter.post('/', authMiddleware, roleMiddleware('psychologist'), upload.single('photo'), createPsychologistProfile);
 
-// Obtener todos los psicólogos
-psychologistRouter.get('/', authMiddleware, getAllPsychologists);
+// Obtener todos los psicólogos (ruta pública para usuarios no registrados)
+psychologistRouter.get('/', getAllPsychologists);
 
 // Obtener psicólogo por user_id
 psychologistRouter.get('/:id', getPsychologistById);

@@ -151,13 +151,8 @@ describe('Auth Controller - CRUD Tests', () => {
           email: 'noexiste@test.com',
           password: 'password123',
         })
-        .catch(err => {
-          expect([404, 401, 400]).toContain(err.status);
-          return { status: err.status };
+          expect(response.status).toBe(404);
         });
-
-      expect([404, 401, 400]).toContain(response.status);
-    });
 
     it('debe retornar 401 con contraseña incorrecta', async () => {
       const response = await request(app)
@@ -166,13 +161,8 @@ describe('Auth Controller - CRUD Tests', () => {
           email: 'existing@test.com',
           password: 'passwordincorrecto',
         })
-        .catch(err => {
-          expect([401, 404, 400]).toContain(err.status);
-          return { status: err.status };
+          expect(response.status).toBe(401);
         });
-
-      expect([401, 404, 400]).toContain(response.status);
-    });
 
     it('debe retornar token al hacer login exitoso', async () => {
       // Primero registrar un usuario
@@ -223,15 +213,10 @@ describe('Auth Controller - CRUD Tests', () => {
           email: 'inactive@test.com',
           password: 'password123',
         })
-        .catch(err => {
-          expect([403, 404, 400]).toContain(err.status);
-          return { status: err.status };
+          expect(response.status).toBe(403);
         });
-
-      expect([403, 404, 400]).toContain(response.status);
-    });
-  });
-
+      });
+      
   describe('POST /auth/google - Login con Google', () => {
     it('debe retornar 400 si no se envía token', async () => {
       const response = await request(app)
@@ -438,3 +423,4 @@ describe('Auth Controller - CRUD Tests', () => {
     });
   });
 });
+

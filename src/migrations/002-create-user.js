@@ -68,6 +68,7 @@ export async function up(queryInterface, Sequelize) {
     role_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      defaultValue: 1,
       references: {
         model: 'role',
         key: 'id',
@@ -107,9 +108,7 @@ export async function up(queryInterface, Sequelize) {
     updated_at: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: Sequelize.literal(
-        'CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
-      ),
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
     },
     deleted_at: {
       type: DataTypes.DATE,

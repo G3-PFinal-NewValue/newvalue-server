@@ -375,7 +375,7 @@ Para consultas o soporte, contacta a: **coramind.newvalue@gmail.com**
 
 ## 📄 Licencia
 
-Este proyecto es parte de Coramind © 2024
+Este proyecto es parte de Coramind © 2025
 
 ---
 
