@@ -40,7 +40,7 @@ const SessionModel = sequelize.define('Session', {
   paranoid: true,
 });
 
-// Relación con Appointment
-SessionModel.belongsTo(AppointmentModel, { foreignKey: 'appointment_id' });
+// CA: asociación pertenece a associations.js para evitar duplicados
+// SessionModel.belongsTo(AppointmentModel, { foreignKey: 'appointment_id' });
 
 export default SessionModel;

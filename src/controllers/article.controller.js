@@ -15,7 +15,6 @@ export const getAllArticles = async (req, res) => {
           model: UserModel,
           as: 'author',
           attributes: ['id', 'first_name', 'last_name', 'email', 'role_id'],
-
         },
         { model: CategoryArticleModel, as: 'category', attributes: ['id', 'name'] }
       ],
@@ -58,8 +57,7 @@ export const getArticleById = async (req, res) => {
 
 export const createArticle = async (req, res) => {
   try {
-    // Validar rol
-    const VerifyRole = req.user.role
+    const VerifyRole = req.user.role;
     if (!req.user.id || VerifyRole !== 'admin') {
       return res.status(403).json({ message: 'Solo admin puede crear un artículo' });
     }
@@ -71,16 +69,19 @@ export const createArticle = async (req, res) => {
       }
     }
 
+    const imageUrl = req.file ? req.file.path : null;
+
     const newArticle = await ArticleModel.create({
       ...req.body,
       author_id: req.user.id,
+      image: imageUrl, // 👈 Añadir URL de Cloudinary
       published_at: req.body.published ? new Date() : null,
     });
 
     res.status(201).json(newArticle);
   } catch (error) {
-    console.error('Error a crear artículo:', error);
-    res.status(400).json({ message: 'Error a crear artículo', error });
+    console.error('Error al crear artículo:', error);
+    res.status(400).json({ message: 'Error al crear artículo', error });
   }
 };
 
@@ -92,9 +93,18 @@ export const updateArticle = async (req, res) => {
 
     const { id } = req.params;
 
+    const currentArticle = await ArticleModel.findByPk(id);
+    if (!currentArticle) {
+      return res.status(404).json({ message: 'Artículo no encontrado' });
+    }
+
+
+    const imageUrl = req.file ? req.file.path : currentArticle.image;
+
     const [updated] = await ArticleModel.update(
       {
         ...req.body,
+        image: imageUrl, 
         published_at: req.body.published ? new Date() : null,
       },
       { where: { id } }
@@ -112,7 +122,7 @@ export const updateArticle = async (req, res) => {
 };
 
 export const deleteArticle = async (req, res) => {
- try {
+  try {
     if (!req.user || req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Solo admin puede eliminar el artículo.' });
     }

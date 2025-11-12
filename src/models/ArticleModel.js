@@ -42,6 +42,12 @@ const ArticleModel = sequelize.define('article', {
     allowNull: false,
   },
 
+   image: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: null,
+  },
+
   published_at: {
     type: DataTypes.DATE,
     allowNull: true,

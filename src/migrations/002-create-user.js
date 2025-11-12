@@ -19,7 +19,7 @@ export async function up(queryInterface, Sequelize) {
       allowNull: true, // null si el usuario usa login con Google
     },
 
-    // Campos personales obligatorios para facturación y legal
+    // Datos personales
     first_name: {
       type: DataTypes.STRING(100),
       allowNull: false,
@@ -63,12 +63,8 @@ export async function up(queryInterface, Sequelize) {
       allowNull: true,
       unique: true,
     },
-    avatar: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
 
-    // Rol del usuario (FK directa)
+    // Rol
     role_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -78,6 +74,16 @@ export async function up(queryInterface, Sequelize) {
       },
       onUpdate: 'CASCADE',
       onDelete: 'RESTRICT',
+    },
+
+    // Token de recuperación de contraseña
+    user_password_token: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    user_password_token_expiration: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
 
     // Estado
@@ -93,7 +99,6 @@ export async function up(queryInterface, Sequelize) {
       allowNull: false,
       defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     },
-
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,
