@@ -1,6 +1,6 @@
-require('dotenv').config();
+import 'dotenv/config';
 
-module.exports = {
+export default {
   development: {
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
@@ -10,5 +10,15 @@ module.exports = {
     dialect: 'mysql',
     migrationStorageTableName: 'sequelize_meta',
     seederStorageTableName: 'sequelize_data'
-  }
+  },
+  test: {
+    username: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_TEST,
+    host: process.env.DB_HOST,
+    dialect: 'mysql',
+    migrationStorageTableName: 'sequelize_meta',
+    seederStorageTableName: 'sequelize_data',
+    logging: false
+  },
 };

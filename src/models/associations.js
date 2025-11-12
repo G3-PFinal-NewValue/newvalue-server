@@ -19,8 +19,8 @@ const PsychologistSpeciality = sequelize.define(
 );
 
 // Relación muchos a muchos Psychologist <-> Speciality
-PsychologistModel.belongsToMany(SpecialityModel, { through: PsychologistSpeciality, as: "specialities", foreignKey: "psychologist_id" });
-SpecialityModel.belongsToMany(PsychologistModel, { through: PsychologistSpeciality, as: "psychologists", foreignKey: "speciality_id" });
+PsychologistModel.belongsToMany(SpecialityModel, { through: PsychologistSpeciality, as: "specialities", foreignKey: "psychologist_id", timestamps: false});
+SpecialityModel.belongsToMany(PsychologistModel, { through: PsychologistSpeciality, as: "psychologists", foreignKey: "speciality_id", timestamps: false});
 
 // ------------------------------------
 // RELACIÓN USER <-> PATIENT

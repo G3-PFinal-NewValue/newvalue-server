@@ -13,6 +13,7 @@ import sessionRouter from './routes/session.routes.js';
 import articleRouter from './routes/article.routes.js';
 import userRouter from './routes/user.routes.js';
 import specialityRoutes from './routes/speciality.routes.js';
+import languageRouter from './routes/language.routes.js';
 import chatRoutes from './routes/chat.routes.js';
 
 
@@ -33,6 +34,7 @@ app.use('/session', sessionRouter);
 app.use('/article', articleRouter);
 app.use('/user', userRouter);
 app.use('/', specialityRoutes);
+app.use('/', languageRouter)
 app.use('/api/chat', chatRoutes);
 
 
